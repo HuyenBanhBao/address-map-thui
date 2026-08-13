@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Address Map Thui</string>
+    <string name="title_activity_main">Address Map Thui</string>
+    <string name="package_name">com.huyenbanhbao.addressmapthui</string>
+    <string name="custom_url_scheme">com.huyenbanhbao.addressmapthui</string>
+</resources>
