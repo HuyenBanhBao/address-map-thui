@@ -40,14 +40,24 @@ h1 { margin: 0; font-size: clamp(1.3rem, 2.6vw, 1.7rem); line-height: 1.15; lett
 .sidebar-label { position: relative; margin: 0 12px 14px; color: #0b4a3b; font-size: .67rem; font-weight: 900; letter-spacing: .13em; z-index: 1; }
 .sidebar nav { position: relative; display: grid; gap: 7px; z-index: 1; }
 .name-label { position: relative; margin: 2px 12px 7px; color: #0b4a3b; font-size: .73rem; font-weight: 800; z-index: 1; }
-.sidebar input { position: relative; width: calc(100% - 24px); margin: 0 12px 10px; border: 1px solid #9fc987; border-radius: 8px; padding: 11px; outline: none; color: #1f2633; background: #ffffffc9; font: inherit; font-size: .9rem; z-index: 1; }
-.sidebar input:focus { border-color: #0b4a3b; box-shadow: 0 0 0 3px #0b4a3b1f; }
+.member-picker { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 0 12px 11px; z-index: 1; }
+.member-choice { border: 1px solid #9fc987; border-radius: 8px; padding: 10px 6px; color: #315244; background: #ffffffc9; cursor: pointer; font: inherit; font-size: .84rem; font-weight: 700; transition: .2s ease; }
+.member-choice:hover { border-color: #0b4a3b; color: #0b4a3b; }
+.member-choice.selected { border-color: #0b4a3b; color: #fff; background: #0b4a3b; box-shadow: 0 3px 9px #0b4a3b30; }
 .share-button { position: relative; width: calc(100% - 24px); margin: 0 12px; border: 0; border-radius: 8px; padding: 11px; color: #0b4a3b; background: #fb8f2c; box-shadow: 0 4px 12px #b5631938; cursor: pointer; font: inherit; font-size: .88rem; font-weight: 800; transition: .2s ease; z-index: 1; }
 .share-button:hover { color: #fff; background: #0b4a3b; transform: translateY(-1px); }
 .people-list { position: relative; margin-top: 25px; z-index: 1; }
 .people-list .sidebar-label { margin-bottom: 8px; }
-.person { display: flex; align-items: center; gap: 9px; margin: 0 12px; padding: 9px 7px; border-bottom: 1px solid #0b4a3b14; color: #315244; font-size: .86rem; font-weight: 600; }
+.person { display: flex; align-items: center; width: calc(100% - 24px); gap: 9px; margin: 0 12px; border: 0; border-bottom: 1px solid #0b4a3b14; padding: 9px 7px; color: #315244; background: transparent; cursor: pointer; font: inherit; font-size: .86rem; font-weight: 600; text-align: left; transition: .2s ease; }
+.person:hover { color: #0b4a3b; background: #ffffff8a; }
 .person-dot { width: 8px; height: 8px; border-radius: 50%; background: #47a86c; box-shadow: 0 0 0 3px #47a86c24; }
+.person-arrow { margin-left: auto; color: #48801b; font-size: 1.35rem; line-height: .7; }
+.person-avatar, .avatar-marker { display: inline-block; overflow: hidden; flex: 0 0 auto; border-radius: 50%; background-image: var(--team-sprite); background-size: 200% 100%; background-repeat: no-repeat; }
+.person-avatar { width: 27px; height: 27px; border: 2px solid #fff; box-shadow: 0 1px 5px #0b4a3b35; }
+.person-avatar.map, .avatar-marker.map { background-position: left center; }
+.person-avatar.vo-thui, .avatar-marker.vo-thui { background-position: right center; }
+.avatar-marker-wrap { background: transparent !important; border: 0 !important; }
+.avatar-marker { width: 46px; height: 46px; border: 3px solid #fff; box-shadow: 0 3px 10px #0b4a3b65; }
 .nav-button { display: flex; align-items: center; gap: 11px; width: 100%; border: 1px solid transparent; border-radius: 9px; padding: 11px 12px; color: #486158; background: transparent; cursor: pointer; font: inherit; font-size: .9rem; text-align: left; transition: .2s ease; }
 .nav-button span { display: grid; width: 22px; height: 22px; place-items: center; color: #48801b; font-size: 1.25rem; line-height: 1; }
 .nav-button:hover:not(:disabled) { color: #0b4a3b; border-color: #48801b24; background: #fff9; transform: translateX(2px); }
