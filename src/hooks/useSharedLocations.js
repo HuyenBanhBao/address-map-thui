@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { Geolocation } from "@capacitor/geolocation";
+import { registerPlugin } from "@capacitor/core";
 import { supabase } from "../supabase";
 
-export const TEAM_MEMBERS = ["Vợ thúi", "Mập"];
-const UPDATE_INTERVAL = 2 * 60 * 1000;
+export const TEAM_MEMBERS = ["Vợ thúi", "Mập xinh"];
+const UPDATE_INTERVAL = 10 * 1000;
 const VISIBLE_FOR = 10 * 60 * 1000;
+const LocationSharing = registerPlugin("LocationSharing");
 
 export function useSharedLocations(onMyLocation) {
     const [name, setName] = useState(() =>
@@ -39,33 +42,37 @@ export function useSharedLocations(onMyLocation) {
         };
     }, [refreshPeople]);
 
-    const updateLocation = useCallback(() => {
-        navigator.geolocation.getCurrentPosition(
-            async ({ coords }) => {
-                const location = { latitude: coords.latitude, longitude: coords.longitude };
-                onMyLocation(location);
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-                if (!user) {
-                    setSharing(false);
-                    setStatus("Phiên chia sẻ đã hết hạn. Vui lòng bật chia sẻ lại.");
-                    return;
-                }
-                const { error } = await supabase
-                    .from("shared_locations")
-                    .upsert({
-                        user_id: user.id,
-                        display_name: name,
-                        ...location,
-                        accuracy: Math.round(coords.accuracy),
-                        updated_at: new Date().toISOString(),
-                    });
-                setStatus(error ? `Không thể cập nhật vị trí: ${error.message}` : "Đang chia sẻ vị trí với nhóm");
-            },
-            () => setStatus("Không thể lấy vị trí. Hãy kiểm tra quyền định vị."),
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
-        );
+    const updateLocation = useCallback(async () => {
+        try {
+            const permission = await Geolocation.requestPermissions();
+            if (permission.location !== "granted" && permission.coarseLocation !== "granted")
+                throw new Error("Bạn chưa cấp quyền vị trí");
+            const position = await Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 60000,
+            });
+            const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+            onMyLocation(location);
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+            if (!user) {
+                setSharing(false);
+                setStatus("Phiên chia sẻ đã hết hạn. Vui lòng bật chia sẻ lại.");
+                return;
+            }
+            const { error } = await supabase.from("shared_locations").upsert({
+                user_id: user.id,
+                display_name: name,
+                ...location,
+                accuracy: Math.round(position.coords.accuracy),
+                updated_at: new Date().toISOString(),
+            });
+            setStatus(error ? `Không thể cập nhật vị trí: ${error.message}` : "Đang chia sẻ vị trí với nhóm");
+        } catch (error) {
+            setStatus(error.message || "Không thể lấy vị trí. Hãy kiểm tra quyền định vị.");
+        }
     }, [name, onMyLocation]);
 
     const startSharing = () => {
@@ -77,14 +84,23 @@ export function useSharedLocations(onMyLocation) {
             setStatus("Hãy chọn người dùng trước khi chia sẻ.");
             return;
         }
-        if (!navigator.geolocation) {
-            setStatus("Trình duyệt này không hỗ trợ định vị.");
-            return;
-        }
         localStorage.setItem("map-display-name", name);
         setSharing(true);
-        setStatus("Đang xác định vị trí…");
+        setStatus("Đang xin quyền và xác định vị trí…");
         updateLocation();
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (!session) return;
+            try {
+                await LocationSharing.start({
+                    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+                    supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+                    accessToken: session.access_token,
+                    refreshToken: session.refresh_token,
+                    userId: session.user.id,
+                    displayName: name,
+                });
+            } catch (_) {}
+        });
     };
 
     useEffect(() => {
@@ -92,8 +108,10 @@ export function useSharedLocations(onMyLocation) {
         const id = window.setInterval(updateLocation, UPDATE_INTERVAL);
         return () => window.clearInterval(id);
     }, [sharing, updateLocation]);
-
     const stopSharing = async () => {
+        try {
+            await LocationSharing.stop();
+        } catch (_) {}
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -101,7 +119,13 @@ export function useSharedLocations(onMyLocation) {
         setSharing(false);
         setStatus("Đã dừng chia sẻ và xóa vị trí của bạn");
     };
-
-    const visiblePeople = people.filter((person) => Date.now() - new Date(person.updated_at).getTime() < VISIBLE_FOR);
-    return { name, setName, people: visiblePeople, sharing, status, startSharing, stopSharing };
+    return {
+        name,
+        setName,
+        people: people.filter((person) => Date.now() - new Date(person.updated_at).getTime() < VISIBLE_FOR),
+        sharing,
+        status,
+        startSharing,
+        stopSharing,
+    };
 }

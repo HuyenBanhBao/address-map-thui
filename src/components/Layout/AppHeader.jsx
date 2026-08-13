@@ -1,59 +1,40 @@
-import { Avatar, Box, Paper, Typography } from "@mui/material";
-import { colors, gradients } from "../../theme";
+import { AppBar, Box, IconButton, Toolbar, Typography } from "@mui/material";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import { colors, gradients, fonts } from "../../theme";
 
-export default function AppHeader({ status }) {
+export default function AppHeader({ status, onMenuOpen }) {
     return (
-        <Box
-            component="header"
-            sx={{
-                display: "grid",
-                gridTemplateColumns: "44px 1fr auto",
-                alignItems: "center",
-                gap: 2,
-                px: { xs: 2, md: 4 },
-                py: 1.75,
-                color: colors.white,
-                background: gradients.header,
-                boxShadow: 3,
-                zIndex: 2,
-            }}
+        <AppBar
+            position="static"
+            elevation={0}
+            sx={{ background: gradients.header, borderBottom: `1px solid ${colors.headerBorder}` }}
         >
-            <Avatar sx={{ bgcolor: colors.white, color: colors.primary, fontWeight: 900, borderRadius: 2 }}>V</Avatar>
-            <Box>
-                <Typography
-                    variant="overline"
-                    sx={{ color: colors.sidebarStart, fontWeight: 800, letterSpacing: ".14em", lineHeight: 1 }}
+            <Toolbar sx={{ minHeight: { xs: 64, sm: 72 }, gap: 1.75, px: { xs: 1.25, sm: 2 } }}>
+                <IconButton
+                    aria-label="Mở chức năng"
+                    onClick={onMenuOpen}
+                    sx={{ color: colors.white, bgcolor: colors.headerOverlay }}
                 >
-                    PHẦN MỀM GIÁM SÁT VÀ RA CHỈ THỊ CHO MẬP THÚI
-                </Typography>
-                <Typography variant="h5" fontWeight={800}>
-                    Vị trí hiện tại
-                </Typography>
-            </Box>
-            <Paper
-                elevation={0}
-                sx={{
-                    px: 1.5,
-                    py: 1,
-                    color: colors.white,
-                    bgcolor: colors.headerOverlay,
-                    border: `1px solid ${colors.headerBorder}`,
-                    whiteSpace: "nowrap",
-                }}
-            >
-                <Box
-                    component="span"
-                    sx={{
-                        display: "inline-block",
-                        width: 8,
-                        height: 8,
-                        mr: 1,
-                        borderRadius: "50%",
-                        bgcolor: colors.online,
-                    }}
-                />
-                {status}
-            </Paper>
-        </Box>
+                    <MenuRoundedIcon />
+                </IconButton>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography
+                        variant="span"
+                        sx={{
+                            // display: { xs: "none", sm: "block" },
+                            display: "block",
+                            fontSize: 18,
+                            color: colors.sidebarStart,
+                            fontWeight: 800,
+                            letterSpacing: ".11em",
+                            lineHeight: 1,
+                            fontFamily: fonts.display,
+                        }}
+                    >
+                        APP GIÁM SÁT VÀ QUẢN LÝ
+                    </Typography>
+                </Box>
+            </Toolbar>
+        </AppBar>
     );
 }

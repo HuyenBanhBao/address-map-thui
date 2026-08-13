@@ -5,6 +5,7 @@ export const colors = {
     primaryDark: "#2f5a12",
     primaryLight: "#48801b",
     accent: "#fb8f2c",
+    colorError: "#D64545",
     background: "#f6fbf2",
     backgroundSoft: "#e5f1db",
     backgroundWarm: "#eae7cb",
@@ -22,6 +23,13 @@ export const colors = {
     avatarShadow: "#0b4a3b40",
 };
 
+export const fonts = {
+    display: '"DynaPuff", system-ui, sans-serif',
+    playful: '"Chewy", system-ui, sans-serif',
+    handwriting: '"Updock", cursive',
+    body: "Inter, system-ui, sans-serif",
+};
+
 export const gradients = {
     header: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
     workspace: `linear-gradient(135deg, ${colors.backgroundSoft}, ${colors.background} 52%, ${colors.backgroundWarm})`,
@@ -35,7 +43,15 @@ export default createTheme({
         background: { default: colors.background, paper: colors.white },
         text: { primary: colors.text, secondary: colors.textMuted },
     },
-    typography: { fontFamily: "Inter, system-ui, sans-serif" },
+    typography: {
+        fontFamily: fonts.body,
+        h1: { fontFamily: fonts.display },
+        h2: { fontFamily: fonts.display },
+        h3: { fontFamily: fonts.display },
+        h4: { fontFamily: fonts.display },
+        h5: { fontFamily: fonts.display },
+        h6: { fontFamily: fonts.display },
+    },
     shape: { borderRadius: 12 },
-    trello: { colors, gradients },
+    trello: { colors, gradients, fonts },
 });
