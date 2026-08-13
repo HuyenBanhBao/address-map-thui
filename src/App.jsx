@@ -154,13 +154,16 @@ function App() {
     );
 
     return (
-    <main className="app-shell" style={{ '--team-sprite': `url(${import.meta.env.BASE_URL}avatars/team-sprite.png)` }}>
+        <main
+            className="app-shell"
+            style={{ "--team-sprite": `url(${import.meta.env.BASE_URL}avatars/team-sprite.png)` }}
+        >
             <header className="topbar">
                 <div className="brand-mark">V</div>
                 <div>
-                    <p className="eyebrow">BẢN ĐỒ NHÓM</p>
+                    <p className="eyebrow">PHẦN MỀM GIÁM SÁT VÀ RA CHỈ THỊ CHO MẬP THÚI</p>
                     <h1>Vị trí hiện tại</h1>
-                    <p className="page-description">Chỉ hiển thị người đã chủ động bật chia sẻ vị trí.</p>
+                    {/* <p className="page-description">Chỉ hiển thị người đã chủ động bật chia sẻ vị trí.</p> */}
                 </div>
                 <p className="status">
                     <span className="status-dot" />
