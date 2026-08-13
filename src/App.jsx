@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
@@ -39,12 +39,14 @@ function App() {
         const visible = people.filter(
             (person) => Date.now() - new Date(person.updated_at).getTime() < LAST_LOCATION_MS,
         );
-        const existing = markers.current;
         visible.forEach((person) => {
             const label = `<strong>${escapeHtml(person.display_name)}</strong><br><small>Cập nhật ${new Date(person.updated_at).toLocaleTimeString("vi-VN")}</small>`;
-            if (existing.has(person.user_id)) {
-                existing.get(person.user_id).setLatLng([person.latitude, person.longitude]).setPopupContent(label);
-            } else {
+            if (markers.current.has(person.user_id))
+                markers.current
+                    .get(person.user_id)
+                    .setLatLng([person.latitude, person.longitude])
+                    .setPopupContent(label);
+            else {
                 const avatar = person.display_name === "Mập" ? "map" : "vo-thui";
                 const marker = L.marker([person.latitude, person.longitude], {
                     icon: L.divIcon({
@@ -57,13 +59,13 @@ function App() {
                 })
                     .bindPopup(label)
                     .addTo(map.current);
-                existing.set(person.user_id, marker);
+                markers.current.set(person.user_id, marker);
             }
         });
-        existing.forEach((marker, id) => {
+        markers.current.forEach((marker, id) => {
             if (!visible.some((person) => person.user_id === id)) {
                 marker.remove();
-                existing.delete(id);
+                markers.current.delete(id);
             }
         });
     }, [people]);
@@ -93,62 +95,76 @@ function App() {
         };
     }, []);
 
+    const updateSharedLocation = useCallback(
+        (centerMap = false) => {
+            navigator.geolocation.getCurrentPosition(
+                async ({ coords }) => {
+                    const location = { latitude: coords.latitude, longitude: coords.longitude };
+                    setMyLocation(location);
+                    if (centerMap) map.current?.setView([location.latitude, location.longitude], 16);
+                    const {
+                        data: { user },
+                    } = await supabase.auth.getUser();
+                    if (!user) {
+                        setSharing(false);
+                        setStatus("Phiên chia sẻ đã hết hạn. Vui lòng bật chia sẻ lại.");
+                        return;
+                    }
+                    const { error } = await supabase
+                        .from("shared_locations")
+                        .upsert({
+                            user_id: user.id,
+                            display_name: name,
+                            ...location,
+                            accuracy: Math.round(coords.accuracy),
+                            updated_at: new Date().toISOString(),
+                        });
+                    setStatus(error ? `Không thể cập nhật vị trí: ${error.message}` : "Đang chia sẻ vị trí với nhóm");
+                },
+                () => setStatus("Không thể lấy vị trí. Hãy kiểm tra quyền định vị."),
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+            );
+        },
+        [name],
+    );
+
     const shareLocation = () => {
         if (!configured) {
             setStatus("Chưa cấu hình Supabase. Xem hướng dẫn trong README.");
             return;
         }
-        if (!name.trim()) {
-            setStatus("Hãy nhập tên hiển thị trước khi chia sẻ.");
+        if (!name) {
+            setStatus("Hãy chọn người dùng trước khi chia sẻ.");
             return;
         }
         if (!navigator.geolocation) {
             setStatus("Trình duyệt này không hỗ trợ định vị.");
             return;
         }
+        localStorage.setItem("map-display-name", name);
+        setSharing(true);
         setStatus("Đang xác định vị trí…");
-        navigator.geolocation.getCurrentPosition(
-            async ({ coords }) => {
-                const location = { latitude: coords.latitude, longitude: coords.longitude };
-                setMyLocation(location);
-                map.current.setView([location.latitude, location.longitude], 16);
-                localStorage.setItem("map-display-name", name.trim());
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-                const { error } = await supabase.from("shared_locations").upsert({
-                    user_id: user.id,
-                    display_name: name.trim(),
-                    ...location,
-                    accuracy: Math.round(coords.accuracy),
-                    updated_at: new Date().toISOString(),
-                });
-                if (error) {
-                    setStatus(`Không thể chia sẻ: ${error.message}`);
-                    return;
-                }
-                setSharing(true);
-                setStatus("Đang chia sẻ vị trí với nhóm");
-            },
-            () => setStatus("Không thể lấy vị trí. Hãy kiểm tra quyền định vị."),
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
-        );
+        updateSharedLocation(true);
     };
+
+    useEffect(() => {
+        if (!sharing) return undefined;
+        const intervalId = window.setInterval(() => updateSharedLocation(), 2 * 60 * 1000);
+        return () => window.clearInterval(intervalId);
+    }, [sharing, updateSharedLocation]);
 
     const stopSharing = async () => {
         const {
             data: { user },
         } = await supabase.auth.getUser();
-        await supabase.from("shared_locations").delete().eq("user_id", user.id);
+        if (user) await supabase.from("shared_locations").delete().eq("user_id", user.id);
         setSharing(false);
         setStatus("Đã dừng chia sẻ và xóa vị trí của bạn");
     };
-
     const focusPerson = (person) => {
         map.current?.setView([person.latitude, person.longitude], 17, { animate: true });
         markers.current.get(person.user_id)?.openPopup();
     };
-
     const visiblePeople = people.filter(
         (person) => Date.now() - new Date(person.updated_at).getTime() < LAST_LOCATION_MS,
     );
@@ -163,7 +179,6 @@ function App() {
                 <div>
                     <p className="eyebrow">PHẦN MỀM GIÁM SÁT VÀ RA CHỈ THỊ CHO MẬP THÚI</p>
                     <h1>Vị trí hiện tại</h1>
-                    {/* <p className="page-description">Chỉ hiển thị người đã chủ động bật chia sẻ vị trí.</p> */}
                 </div>
                 <p className="status">
                     <span className="status-dot" />
@@ -198,9 +213,6 @@ function App() {
                                 key={person.user_id}
                                 onClick={() => focusPerson(person)}
                             >
-                                {/* <span
-                                    className={`person-avatar ${person.display_name === "Mập" ? "map" : "vo-thui"}`}
-                                /> */}
                                 {person.display_name}
                                 <span className="person-arrow">›</span>
                             </button>
