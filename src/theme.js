@@ -21,6 +21,17 @@ export const colors = {
     subtleBorder: "#0b4a3b16",
     markerShadow: "#0b4a3b65",
     avatarShadow: "#0b4a3b40",
+
+    boxShadowPrimary:
+        "rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset",
+
+    boxShadowBtn:
+        "rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset",
+    boxShadowBtnHover:
+        "rgba(0, 0, 0, 0.3) 0px 2px 4px, rgba(0, 0, 0, 0.2) 0px 5px 10px -2px, rgba(0, 0, 0, 0.15) 0px -2px 0px inset",
+    boxShadowBulletin: "rgb(76 76 76) 3px 3px 6px 0px inset, rgb(255 255 255 / 50%) -3px -3px 6px 1px inset",
+    boxShadowDots:
+        "0 6px 12px rgba(0, 0, 0, 0.25), 0 -2px 4px rgba(255, 255, 255, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
 };
 
 export const fonts = {

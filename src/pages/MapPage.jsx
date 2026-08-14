@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Box, Button, CssBaseline, Drawer, Fab, Paper, ThemeProvider, Typography } from "@mui/material";
+import { Box, Button, Collapse, CssBaseline, Drawer, Fab, Paper, ThemeProvider, Typography } from "@mui/material";
+import { keyframes } from "@mui/system";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import AppHeader from "../components/Layout/AppHeader";
@@ -9,11 +10,16 @@ import { useSharedLocations } from "../hooks/useSharedLocations";
 import theme, { colors, gradients, fonts } from "../theme";
 
 const initialLocation = { latitude: 10.7769, longitude: 106.7009 };
+const reportBadgePulse = keyframes`
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+`;
 
 export default function MapPage() {
     const mapRef = useRef(null);
     const [myLocation, setMyLocation] = useState(initialLocation);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [reportOpen, setReportOpen] = useState(false);
     const location = useSharedLocations(setMyLocation);
     const sidebar = (
         <TeamSidebar
@@ -77,59 +83,123 @@ export default function MapPage() {
                         sx={{ position: "relative", overflow: "hidden", minHeight: 0 }}
                     >
                         <LocationMap ref={mapRef} people={location.people} />
-                        <Paper
-                            elevation={5}
+                        <Box
                             sx={{
                                 position: "absolute",
-                                left: 12,
-                                right: 12,
-                                bottom: 14,
+                                right: 16,
+                                bottom: 18,
+                                left: 16,
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 1.25,
-                                p: 1.25,
-                                border: `1px solid ${colors.border}`,
-                                borderRadius: 3,
-                                bgcolor: colors.accent,
+                                justifyContent: "flex-end",
+                                gap: 1,
                             }}
                         >
-                            <PeopleAltOutlinedIcon color="primary" />
-                            <Box>
-                                <Typography
-                                    variant="span"
-                                    sx={{
-                                        //
-                                        display: "block",
-                                        mb: 0.5,
-                                        fontWeight: 800,
-                                        fontFamily: fonts.display,
-                                        fontSize: 16,
-                                    }}
-                                >
-                                    Báo cáo Đại nhân !!!
-                                </Typography>
-                                <Typography
-                                    variant="span"
-                                    sx={{
-                                        //
-                                        display: "block",
-                                        fontWeight: 300,
-                                        fontSize: 13,
-                                        color: colors.text,
-                                        fontFamily: fonts.display,
-                                    }}
-                                >
-                                    Phát hiện {location.people.length} đối tượng lộ vị trí do bủm thúi
-                                </Typography>
-                            </Box>
-                            <Button
-                                size="small"
-                                onClick={() => setDrawerOpen(true)}
-                                sx={{ ml: "auto", textTransform: "none", fontWeight: 800 }}
+                            <Fab
+                                aria-label="Mở báo cáo vị trí"
+                                onClick={() => setReportOpen((open) => !open)}
+                                sx={{
+                                    flexShrink: 0,
+                                    width: 45,
+                                    height: 45,
+                                    bgcolor: colors.accent,
+                                    color: colors.primary,
+                                    border: `2px solid ${colors.white}`,
+                                    boxShadow: `0 8px 20px ${colors.markerShadow}`,
+                                    "&:hover": { bgcolor: colors.accent },
+                                }}
                             >
-                                Xem
-                            </Button>
-                        </Paper>
+                                <PeopleAltOutlinedIcon sx={{ fontSize: 20 }} />
+                                <Box
+                                    component="span"
+                                    sx={{
+                                        position: "absolute",
+                                        top: -5,
+                                        right: -4,
+                                        minWidth: 21,
+                                        height: 21,
+                                        px: 0.5,
+                                        display: "grid",
+                                        placeItems: "center",
+                                        borderRadius: "50%",
+                                        bgcolor: colors.primary,
+                                        color: colors.white,
+                                        border: `2px solid ${colors.white}`,
+                                        fontSize: 11,
+                                        fontWeight: 800,
+                                        animation:
+                                            location.people.length > 0
+                                                ? `${reportBadgePulse} 1.8s ease-in-out infinite`
+                                                : "none",
+                                    }}
+                                >
+                                    {location.people.length}
+                                </Box>
+                            </Fab>
+                            <Collapse
+                                orientation="horizontal"
+                                in={reportOpen}
+                                timeout={{ enter: 380, exit: 260 }}
+                                sx={{
+                                    display: "flex",
+                                    "& .MuiCollapse-wrapperInner": { display: "flex" },
+                                }}
+                            >
+                                <Paper
+                                    elevation={5}
+                                    onClick={() => {
+                                        setDrawerOpen(true);
+                                        setReportOpen(false);
+                                    }}
+                                    sx={{
+                                        width: "min(300px, calc(100vw - 106px))",
+                                        minWidth: 0,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1.25,
+                                        p: 1.25,
+                                        border: `1px solid ${colors.border}`,
+                                        borderRadius: 3,
+                                        bgcolor: colors.accent,
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    {/* <PeopleAltOutlinedIcon color="primary" /> */}
+                                    <Box
+                                        sx={{
+                                            px: 1,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="span"
+                                            sx={{
+                                                //
+                                                display: "block",
+                                                mb: 0.5,
+                                                fontWeight: 800,
+                                                fontFamily: fonts.display,
+                                                fontSize: 16,
+                                            }}
+                                        >
+                                            Báo cáo Đại nhân !!!
+                                        </Typography>
+                                        <Typography
+                                            variant="span"
+                                            sx={{
+                                                //
+                                                display: "block",
+                                                fontWeight: 300,
+                                                fontSize: 13,
+                                                color: colors.text,
+                                                fontFamily: fonts.display,
+                                            }}
+                                        >
+                                            Phát hiện {location.people.length} đối tượng lộ vị trí do bủm thúi
+                                        </Typography>
+                                    </Box>
+                                </Paper>
+                            </Collapse>
+                        </Box>
                     </Paper>
                 </Box>
             </Box>

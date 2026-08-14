@@ -1,21 +1,26 @@
-import {
-    Avatar,
-    Box,
-    Button,
-    Divider,
-    List,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Stack,
-    Typography,
-} from "@mui/material";
+import { Avatar, Box, Button, Divider, List, ListItemButton, ListItemIcon, Stack, Typography } from "@mui/material";
+// --------- Icons ---------
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import LocalDiningRoundedIcon from "@mui/icons-material/LocalDiningRounded";
+import HandymanRoundedIcon from "@mui/icons-material/HandymanRounded";
+
+// ------------------
 import { TEAM_MEMBERS } from "../../hooks/useSharedLocations";
 import { colors, gradients, fonts } from "../../theme";
+
+const STYLE_BTN = {
+    borderRadius: 1,
+    display: "flex",
+    alignItems: "center",
+    px: 1.5,
+    py: 0.75,
+    gap: 1,
+    mb: 1,
+    boxShadow: colors.boxShadowBtn,
+};
 
 export default function TeamSidebar({ name, onNameChange, people, sharing, onShare, onStop, onFocus, onClose }) {
     const avatarSx = (member) => ({
@@ -61,21 +66,15 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
             </Typography>
             {/* ---------------- LIST ---------------- */}
             <List disablePadding sx={{ mt: 2 }}>
-                <ListItemButton
-                    selected
+                {/* --- Button 1 --- */}
+                <Box
                     sx={{
-                        borderRadius: 2,
-                        mb: 0.5,
-                        "&.Mui-selected": {
-                            bgcolor: colors.accent,
-                            color: colors.primary,
-                            "&:hover": { bgcolor: colors.accent },
-                        },
+                        ...STYLE_BTN,
+                        bgcolor: colors.primary,
+                        color: colors.white,
                     }}
                 >
-                    <ListItemIcon sx={{ minWidth: 36, color: colors.backgroundSoft }}>
-                        <MapOutlinedIcon />
-                    </ListItemIcon>
+                    <MapOutlinedIcon sx={{ minWidth: 36, color: colors.backgroundSoft }} />
                     <Typography
                         variant="span"
                         sx={{
@@ -87,11 +86,10 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                     >
                         Mập xinh chốn đâu
                     </Typography>
-                </ListItemButton>
-                <ListItemButton disabled sx={{ borderRadius: 2 }}>
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                        <TimelineOutlinedIcon />
-                    </ListItemIcon>
+                </Box>
+                {/* --- Button 2 --- */}
+                <Box sx={STYLE_BTN}>
+                    <TimelineOutlinedIcon sx={{ minWidth: 36 }} />
                     <Typography
                         variant="span"
                         sx={{
@@ -102,7 +100,35 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                     >
                         Dấu vết để lại
                     </Typography>
-                </ListItemButton>
+                </Box>
+                {/* --- Button 3 --- */}
+                <Box sx={STYLE_BTN}>
+                    <LocalDiningRoundedIcon sx={{ minWidth: 36 }} />
+                    <Typography
+                        variant="span"
+                        sx={{
+                            //
+                            fontWeight: 400,
+                            fontFamily: fonts.display,
+                        }}
+                    >
+                        Ngự trù
+                    </Typography>
+                </Box>
+                {/* --- Button 4 --- */}
+                <Box sx={STYLE_BTN}>
+                    <HandymanRoundedIcon sx={{ minWidth: 36 }} />
+                    <Typography
+                        variant="span"
+                        sx={{
+                            //
+                            fontWeight: 400,
+                            fontFamily: fonts.display,
+                        }}
+                    >
+                        Nội Vụ Phủ
+                    </Typography>
+                </Box>
             </List>
 
             {/* ---------------- GROUPS ---------------- */}
@@ -132,8 +158,8 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                             fontWeight: 800,
                             fontFamily: fonts.display,
                             fontSize: 14,
-                            boxShadow: 3,
                             color: name === member ? colors.white : colors.primary,
+                            boxShadow: colors.boxShadowBtn,
                         }}
                     >
                         {member}
@@ -152,8 +178,8 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                     fontWeight: 500,
                     fontSize: 16,
                     textTransform: "none",
-                    boxShadow: 3,
                     fontFamily: fonts.display,
+                    boxShadow: colors.boxShadowBtn,
                 }}
             >
                 {sharing ? "Lẩn trốn" : "Báo cáo vị trí"}
