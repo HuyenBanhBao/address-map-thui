@@ -1,4 +1,5 @@
 import { Avatar, Box, Button, Divider, List, ListItemButton, ListItemIcon, Stack, Typography } from "@mui/material";
+import { useState } from "react";
 // --------- Icons ---------
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
@@ -6,6 +7,7 @@ import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import LocalDiningRoundedIcon from "@mui/icons-material/LocalDiningRounded";
 import HandymanRoundedIcon from "@mui/icons-material/HandymanRounded";
+import { Link } from "react-router-dom";
 
 // ------------------
 import { TEAM_MEMBERS } from "../../hooks/useSharedLocations";
@@ -23,6 +25,7 @@ const STYLE_BTN = {
 };
 
 export default function TeamSidebar({ name, onNameChange, people, sharing, onShare, onStop, onFocus, onClose }) {
+    const [selectedFeature, setSelectedFeature] = useState("map");
     const avatarSx = (member) => ({
         width: 32,
         height: 32,
@@ -68,62 +71,107 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
             <List disablePadding sx={{ mt: 2 }}>
                 {/* --- Button 1 --- */}
                 <Box
+                    component={Link}
+                    to="/"
+                    onClick={() => {
+                        setSelectedFeature("map");
+                        onClose?.();
+                    }}
                     sx={{
                         ...STYLE_BTN,
-                        bgcolor: colors.primary,
-                        color: colors.white,
+                        bgcolor: selectedFeature === "map" ? colors.primary : "transparent",
+                        color: selectedFeature === "map" ? colors.backgroundSoft : colors.text,
+                        textDecoration: "none",
+                        cursor: "pointer",
                     }}
                 >
-                    <MapOutlinedIcon sx={{ minWidth: 36, color: colors.backgroundSoft }} />
+                    <MapOutlinedIcon sx={{ minWidth: 36, color: "inherit" }} />
                     <Typography
                         variant="span"
                         sx={{
                             //
                             fontWeight: 400,
                             fontFamily: fonts.display,
-                            color: colors.backgroundSoft,
+                            color: "inherit",
                         }}
                     >
                         Mập xinh chốn đâu
                     </Typography>
                 </Box>
                 {/* --- Button 2 --- */}
-                <Box sx={STYLE_BTN}>
-                    <TimelineOutlinedIcon sx={{ minWidth: 36 }} />
+                <Box
+                    onClick={() => setSelectedFeature("timeline")}
+                    sx={{
+                        ...STYLE_BTN,
+                        bgcolor: selectedFeature === "timeline" ? colors.primary : "transparent",
+                        color: selectedFeature === "timeline" ? colors.backgroundSoft : colors.text,
+                        cursor: "pointer",
+                    }}
+                >
+                    <TimelineOutlinedIcon sx={{ minWidth: 36, color: "inherit" }} />
                     <Typography
                         variant="span"
                         sx={{
                             //
                             fontWeight: 400,
                             fontFamily: fonts.display,
+                            color: "inherit",
                         }}
                     >
                         Dấu vết để lại
                     </Typography>
                 </Box>
                 {/* --- Button 3 --- */}
-                <Box sx={STYLE_BTN}>
-                    <LocalDiningRoundedIcon sx={{ minWidth: 36 }} />
+                <Box
+                    component={Link}
+                    to="/cook"
+                    onClick={() => {
+                        setSelectedFeature("kitchen");
+                        onClose?.();
+                    }}
+                    sx={{
+                        ...STYLE_BTN,
+                        bgcolor: selectedFeature === "kitchen" ? colors.primary : "transparent",
+                        color: selectedFeature === "kitchen" ? colors.backgroundSoft : colors.text,
+                        cursor: "pointer",
+                    }}
+                >
+                    <LocalDiningRoundedIcon sx={{ minWidth: 36, color: "inherit" }} />
                     <Typography
                         variant="span"
                         sx={{
                             //
                             fontWeight: 400,
                             fontFamily: fonts.display,
+                            color: "inherit",
                         }}
                     >
                         Ngự trù
                     </Typography>
                 </Box>
                 {/* --- Button 4 --- */}
-                <Box sx={STYLE_BTN}>
-                    <HandymanRoundedIcon sx={{ minWidth: 36 }} />
+                <Box
+                    component={Link}
+                    to="/repair"
+                    onClick={() => {
+                        setSelectedFeature("office");
+                        onClose?.();
+                    }}
+                    sx={{
+                        ...STYLE_BTN,
+                        bgcolor: selectedFeature === "office" ? colors.primary : "transparent",
+                        color: selectedFeature === "office" ? colors.backgroundSoft : colors.text,
+                        cursor: "pointer",
+                    }}
+                >
+                    <HandymanRoundedIcon sx={{ minWidth: 36, color: "inherit" }} />
                     <Typography
                         variant="span"
                         sx={{
                             //
                             fontWeight: 400,
                             fontFamily: fonts.display,
+                            color: "inherit",
                         }}
                     >
                         Nội Vụ Phủ
