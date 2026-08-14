@@ -31,7 +31,7 @@ export default function AppHeader({ status, onMenuOpen }) {
                             fontFamily: fonts.display,
                         }}
                     >
-                        APP GIÁM SÁT VÀ QUẢN LÝ
+                        HOME ĐUÝT'S THÚI
                     </Typography>
                 </Box>
             </Toolbar>
