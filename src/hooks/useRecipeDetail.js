@@ -44,7 +44,7 @@ export function useRecipeDetail(recipeId) {
             setRecipe({ ...recipeData, image_url: imageUrl(recipeData.image_path) });
             setIngredients(ingredientData || []);
             setSteps(stepData || []);
-            setCanEdit(user?.id === recipeData.created_by);
+            setCanEdit(Boolean(user));
         }
         setLoading(false);
     }, [recipeId]);

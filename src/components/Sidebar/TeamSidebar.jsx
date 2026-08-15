@@ -1,4 +1,18 @@
-import { Avatar, Box, Button, Divider, List, ListItemButton, ListItemIcon, Stack, Typography } from "@mui/material";
+import {
+    Avatar,
+    Box,
+    Button,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    Paper,
+    Stack,
+    Typography,
+} from "@mui/material";
 import { useState } from "react";
 // --------- Icons ---------
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
@@ -7,10 +21,12 @@ import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import LocalDiningRoundedIcon from "@mui/icons-material/LocalDiningRounded";
 import HandymanRoundedIcon from "@mui/icons-material/HandymanRounded";
-import { Link } from "react-router-dom";
+import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import { Link, useNavigate } from "react-router-dom";
 
 // ------------------
 import { TEAM_MEMBERS } from "../../hooks/useSharedLocations";
+import { useRecipeOrders } from "../../hooks/useRecipeOrders";
 import { colors, gradients, fonts } from "../../theme";
 
 const STYLE_BTN = {
@@ -26,6 +42,9 @@ const STYLE_BTN = {
 
 export default function TeamSidebar({ name, onNameChange, people, sharing, onShare, onStop, onFocus, onClose }) {
     const [selectedFeature, setSelectedFeature] = useState("map");
+    const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+    const { orderedRecipes } = useRecipeOrders();
+    const navigate = useNavigate();
     const avatarSx = (member) => ({
         width: 32,
         height: 32,
@@ -178,6 +197,120 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                     </Typography>
                 </Box>
             </List>
+
+            <Box
+                onClick={() => setOrderDialogOpen(true)}
+                sx={{
+                    ...STYLE_BTN,
+                    mb: 0,
+                    bgcolor: "transparent",
+                    color: colors.text,
+                    cursor: "pointer",
+                }}
+            >
+                <ReceiptLongRoundedIcon sx={{ minWidth: 36, color: "inherit" }} />
+                <Typography sx={{ flex: 1, fontFamily: fonts.display, fontWeight: 500, color: "inherit" }}>
+                    Đại nhân order
+                </Typography>
+                <Typography
+                    sx={{
+                        minWidth: 20,
+                        textAlign: "center",
+                        borderRadius: "50%",
+                        bgcolor: colors.backgroundSoft,
+                        color: colors.primary,
+                        fontSize: 12,
+                        fontWeight: 800,
+                    }}
+                >
+                    {orderedRecipes.length}
+                </Typography>
+            </Box>
+            <Box sx={{ display: "none" }}>
+                <List disablePadding sx={{ mb: 1, px: 1 }}>
+                    {orderedRecipes.length === 0 ? (
+                        <Typography sx={{ py: 1, color: colors.textMuted, fontSize: 12 }}>
+                            Đại nhân chưa gọi món.
+                        </Typography>
+                    ) : (
+                        orderedRecipes.map((recipe) => (
+                            <Typography
+                                key={recipe.id}
+                                sx={{ py: 0.5, color: colors.text, fontFamily: fonts.display, fontSize: 13 }}
+                            >
+                                • {recipe.name}
+                            </Typography>
+                        ))
+                    )}
+                </List>
+            </Box>
+
+            <Dialog
+                open={orderDialogOpen}
+                onClose={() => setOrderDialogOpen(false)}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{ sx: { borderRadius: 3, bgcolor: colors.background } }}
+            >
+                <DialogTitle sx={{ fontFamily: fonts.display, fontWeight: 800, color: colors.primary }}>
+                    Đại nhân order
+                </DialogTitle>
+                <DialogContent>
+                    {orderedRecipes.length === 0 ? (
+                        <Typography sx={{ color: colors.textMuted }}>Đại nhân chưa gọi món.</Typography>
+                    ) : (
+                        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 1.25 }}>
+                            {orderedRecipes.map((recipe) => (
+                                <Paper
+                                    key={recipe.id}
+                                    onClick={() => {
+                                        setOrderDialogOpen(false);
+                                        onClose?.();
+                                        navigate(`/cook/${recipe.id}`);
+                                    }}
+                                    elevation={0}
+                                    sx={{
+                                        overflow: "hidden",
+                                        borderRadius: 1,
+                                        cursor: "pointer",
+                                        bgcolor: colors.white,
+                                        border: `1px solid ${colors.border}`,
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            aspectRatio: "1.2 / 1",
+                                            bgcolor: colors.backgroundSoft,
+                                            background: recipe.image_url
+                                                ? `center / cover no-repeat url(${recipe.image_url})`
+                                                : colors.backgroundSoft,
+                                        }}
+                                    />
+                                    <Typography
+                                        sx={{
+                                            p: 1,
+                                            display: "-webkit-box",
+                                            overflow: "hidden",
+                                            WebkitBoxOrient: "vertical",
+                                            WebkitLineClamp: 2,
+                                            boxSizing: "border-box",
+                                            lineHeight: 1.35,
+                                            minHeight: 45,
+                                            maxHeight: 45,
+                                            fontFamily: fonts.display,
+                                            fontSize: 13,
+                                            fontWeight: 700,
+                                            color: colors.text,
+                                        }}
+                                    >
+                                        {recipe.name}
+                                    </Typography>
+                                </Paper>
+                            ))}
+                        </Box>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* ---------------- GROUPS ---------------- */}
             <Divider sx={{ my: 1, borderColor: colors.subtleBorder }} />

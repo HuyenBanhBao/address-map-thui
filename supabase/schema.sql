@@ -55,15 +55,17 @@ create policy "Signed-in users can add recipes"
   with check ((select auth.uid()) = created_by);
 
 drop policy if exists "Creators can edit recipes" on public.recipes;
-create policy "Creators can edit recipes"
+drop policy if exists "Signed-in users can edit recipes" on public.recipes;
+create policy "Signed-in users can edit recipes"
   on public.recipes for update to authenticated
-  using ((select auth.uid()) = created_by)
-  with check ((select auth.uid()) = created_by);
+  using (true)
+  with check (true);
 
 drop policy if exists "Creators can remove recipes" on public.recipes;
-create policy "Creators can remove recipes"
+drop policy if exists "Signed-in users can remove recipes" on public.recipes;
+create policy "Signed-in users can remove recipes"
   on public.recipes for delete to authenticated
-  using ((select auth.uid()) = created_by);
+  using (true);
 
 insert into storage.buckets (id, name, public)
 values ('recipe-images', 'recipe-images', true)
@@ -83,12 +85,10 @@ create policy "Users can upload their recipe images"
   );
 
 drop policy if exists "Users can delete their recipe images" on storage.objects;
-create policy "Users can delete their recipe images"
+drop policy if exists "Signed-in users can delete recipe images" on storage.objects;
+create policy "Signed-in users can delete recipe images"
   on storage.objects for delete to authenticated
-  using (
-    bucket_id = 'recipe-images'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
-  );
+  using (bucket_id = 'recipe-images');
 
 create table if not exists public.recipe_ingredients (
   id uuid primary key default gen_random_uuid(),
@@ -115,17 +115,59 @@ create policy "Signed-in users can see recipe ingredients"
   on public.recipe_ingredients for select to authenticated using (true);
 
 drop policy if exists "Recipe creators manage ingredients" on public.recipe_ingredients;
-create policy "Recipe creators manage ingredients"
+drop policy if exists "Signed-in users manage ingredients" on public.recipe_ingredients;
+create policy "Signed-in users manage ingredients"
   on public.recipe_ingredients for all to authenticated
-  using (exists (select 1 from public.recipes where recipes.id = recipe_id and recipes.created_by = (select auth.uid())))
-  with check (exists (select 1 from public.recipes where recipes.id = recipe_id and recipes.created_by = (select auth.uid())));
+  using (true)
+  with check (true);
 
 drop policy if exists "Signed-in users can see recipe steps" on public.recipe_steps;
 create policy "Signed-in users can see recipe steps"
   on public.recipe_steps for select to authenticated using (true);
 
 drop policy if exists "Recipe creators manage steps" on public.recipe_steps;
-create policy "Recipe creators manage steps"
+drop policy if exists "Signed-in users manage steps" on public.recipe_steps;
+create policy "Signed-in users manage steps"
   on public.recipe_steps for all to authenticated
-  using (exists (select 1 from public.recipes where recipes.id = recipe_id and recipes.created_by = (select auth.uid())))
-  with check (exists (select 1 from public.recipes where recipes.id = recipe_id and recipes.created_by = (select auth.uid())));
+  using (true)
+  with check (true);
+
+create table if not exists public.recipe_orders (
+  id uuid primary key default gen_random_uuid(),
+  created_by uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'done', 'cancelled')),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.recipe_order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.recipe_orders(id) on delete cascade,
+  recipe_id uuid not null references public.recipes(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  unique (order_id, recipe_id)
+);
+
+alter table public.recipe_orders enable row level security;
+alter table public.recipe_order_items enable row level security;
+
+drop policy if exists "Signed-in users can see recipe orders" on public.recipe_orders;
+create policy "Signed-in users can see recipe orders"
+  on public.recipe_orders for select to authenticated using (true);
+
+drop policy if exists "Signed-in users can add recipe orders" on public.recipe_orders;
+create policy "Signed-in users can add recipe orders"
+  on public.recipe_orders for insert to authenticated
+  with check ((select auth.uid()) = created_by);
+
+drop policy if exists "Signed-in users can remove recipe orders" on public.recipe_orders;
+create policy "Signed-in users can remove recipe orders"
+  on public.recipe_orders for delete to authenticated using (true);
+
+drop policy if exists "Signed-in users can see recipe order items" on public.recipe_order_items;
+create policy "Signed-in users can see recipe order items"
+  on public.recipe_order_items for select to authenticated using (true);
+
+drop policy if exists "Signed-in users can add recipe order items" on public.recipe_order_items;
+create policy "Signed-in users can add recipe order items"
+  on public.recipe_order_items for insert to authenticated
+  with check (exists (select 1 from public.recipe_orders where recipe_orders.id = order_id and recipe_orders.created_by = (select auth.uid())));

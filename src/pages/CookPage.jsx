@@ -1,12 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Box,
     Button,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     Fab,
+    FormControlLabel,
     IconButton,
     MenuItem,
     Paper,
@@ -19,10 +21,12 @@ import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateR
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { useNavigate } from "react-router-dom";
 import { useRecipes } from "../hooks/useRecipes";
+import { useRecipeOrders } from "../hooks/useRecipeOrders";
 import { colors, fonts } from "../theme";
 
 const CATEGORIES = [
@@ -40,6 +44,13 @@ export default function CookPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [draft, setDraft] = useState({ name: "", category: "main", image: "" });
+    const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+    const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+    const { orderedRecipes, createOrder, savingOrder, orderError } = useRecipeOrders();
+
+    useEffect(() => {
+        if (orderDialogOpen) setSelectedOrderIds(orderedRecipes.map((recipe) => recipe.id));
+    }, [orderDialogOpen, orderedRecipes]);
 
     const setImageFromFile = (file) => {
         if (!file) return;
@@ -78,6 +89,21 @@ export default function CookPage() {
             // Error is shown in the recipe list so the user can retry.
         } finally {
             setSaving(false);
+        }
+    };
+
+    const toggleOrderRecipe = (recipeId) => {
+        setSelectedOrderIds((current) =>
+            current.includes(recipeId) ? current.filter((id) => id !== recipeId) : [...current, recipeId],
+        );
+    };
+    const submitOrder = async () => {
+        try {
+            await createOrder(selectedOrderIds);
+            setSelectedOrderIds([]);
+            setOrderDialogOpen(false);
+        } catch {
+            // The database error is rendered in the dialog.
         }
     };
 
@@ -161,7 +187,7 @@ export default function CookPage() {
                         return (
                             <Box
                                 key={category.id}
-                                sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.25 }}
+                                sx={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 1.25 }}
                             >
                                 <Typography
                                     sx={{
@@ -207,12 +233,17 @@ export default function CookPage() {
                                         </Box>
                                         <Box sx={{ p: 1.1 }}>
                                             <Typography
-                                                noWrap
                                                 sx={{
                                                     fontFamily: fonts.display,
                                                     fontWeight: 700,
                                                     fontSize: 13,
                                                     color: colors.text,
+                                                    display: "-webkit-box",
+                                                    WebkitBoxOrient: "vertical",
+                                                    WebkitLineClamp: 2,
+                                                    overflow: "hidden",
+                                                    lineHeight: 1.35,
+                                                    minHeight: "2.7em",
                                                 }}
                                             >
                                                 {recipe.name}
@@ -247,8 +278,31 @@ export default function CookPage() {
                     })}
                 </Box>
             </Box>
-            <Fab
-                variant="extended"
+            <Box
+                onClick={() => setOrderDialogOpen(true)}
+                sx={{
+                    position: "absolute",
+                    left: 16,
+                    bottom: 16,
+                    bgcolor: colors.primary,
+                    color: colors.white,
+                    fontFamily: fonts.display,
+                    fontWeight: 500,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 2.5,
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: `0 5px 14px ${colors.avatarShadow}`,
+                    cursor: "pointer",
+                }}
+            >
+                <ShoppingCartOutlinedIcon sx={{ mr: 0.75, fontSize: 16 }} />
+                <Typography variant="span">Tiểu nhị, gọi món</Typography>
+            </Box>
+            <Box
                 onClick={() => setDialogOpen(true)}
                 sx={{
                     position: "absolute",
@@ -257,12 +311,20 @@ export default function CookPage() {
                     bgcolor: colors.accent,
                     color: colors.primary,
                     fontFamily: fonts.display,
-                    fontWeight: 800,
+                    fontWeight: 600,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 2.5,
+                    cursor: "pointer",
                     "&:hover": { bgcolor: colors.accent },
                 }}
             >
-                <AddRoundedIcon sx={{ mr: 0.75 }} /> Thêm món ăn
-            </Fab>
+                <AddRoundedIcon sx={{ mr: 0.75, fontSize: 18 }} />
+                <Typography variant="span">Thêm bí kíp</Typography>
+            </Box>
             <Dialog
                 open={dialogOpen}
                 onClose={() => !saving && setDialogOpen(false)}
@@ -332,6 +394,66 @@ export default function CookPage() {
                         sx={{ bgcolor: colors.primary }}
                     >
                         {saving ? "Đang lưu..." : "Lưu món"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog
+                open={orderDialogOpen}
+                onClose={() => !savingOrder && setOrderDialogOpen(false)}
+                fullWidth
+                maxWidth="xs"
+                PaperProps={{ sx: { borderRadius: 3, bgcolor: colors.background } }}
+            >
+                <DialogTitle sx={{ fontFamily: fonts.display, fontWeight: 800, color: colors.primary }}>
+                    Order món ăn
+                </DialogTitle>
+                <DialogContent sx={{ pt: "8px !important" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography sx={{ color: colors.textMuted, fontSize: 13 }}>
+                        Chọn những món Đại nhân muốn ăn.
+                    </Typography>
+                    <Button size="small" onClick={() => setSelectedOrderIds([])} sx={{ color: colors.primary, flexShrink: 0 }}>
+                        Bỏ chọn tất cả
+                    </Button>
+                    </Box>
+                    {recipes.map((recipe) => (
+                        <FormControlLabel
+                            key={recipe.id}
+                            control={
+                                <Checkbox
+                                    checked={selectedOrderIds.includes(recipe.id)}
+                                    onChange={() => toggleOrderRecipe(recipe.id)}
+                                    color="secondary"
+                                />
+                            }
+                            label={recipe.name}
+                            sx={{
+                                display: "flex",
+                                mx: 0,
+                                borderBottom: `1px solid ${colors.subtleBorder}`,
+                                "& .MuiFormControlLabel-label": {
+                                    fontFamily: fonts.display,
+                                    fontSize: 14,
+                                    color: colors.text,
+                                },
+                            }}
+                        />
+                    ))}
+                    {orderError && (
+                        <Typography sx={{ mt: 1, color: "error.main", fontSize: 13 }}>{orderError}</Typography>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setOrderDialogOpen(false)} disabled={savingOrder}>
+                        Hủy
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={submitOrder}
+                        disabled={savingOrder || selectedOrderIds.length === 0}
+                        sx={{ bgcolor: colors.primary }}
+                    >
+                        {savingOrder ? "Đang gửi..." : `Đặt ${selectedOrderIds.length} món`}
                     </Button>
                 </DialogActions>
             </Dialog>
