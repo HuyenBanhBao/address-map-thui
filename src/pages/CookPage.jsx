@@ -1,40 +1,28 @@
 import { useRef, useState } from "react";
-import { Box, IconButton, Paper, Tab, Tabs, Typography } from "@mui/material";
+import {
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Fab,
+    IconButton,
+    MenuItem,
+    Paper,
+    Tab,
+    Tabs,
+    TextField,
+    Typography,
+} from "@mui/material";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
+import { useRecipes } from "../hooks/useRecipes";
 import { colors, fonts } from "../theme";
-
-const RECIPES = [
-    "Thịt kho trứng",
-    "Bún chả",
-    "Cơm tấm",
-    "Mì Ý",
-    "Bánh xèo",
-    "Canh chua",
-    "Gà chiên",
-    "Bò lúc lắc",
-    "Cá kho",
-    "Cháo sườn",
-    "Nem rán",
-    "Phở bò",
-    "Bánh mì",
-    "Mì xào",
-    "Sườn nướng",
-    "Cơm chiên",
-    "Lẩu thái",
-    "Ốc xào",
-    "Chè khúc bạch",
-    "Bánh flan",
-].map((name, index) => ({
-    id: index + 1,
-    name,
-    category: index < 5 ? "main" : index < 9 ? "soup" : index < 14 ? "side" : "snack",
-    time: `${10 + (index % 4) * 5} phút`,
-    rating: (4.5 + (index % 5) / 10).toFixed(1),
-}));
 
 const CATEGORIES = [
     { id: "main", label: "Món chính" },
@@ -44,44 +32,51 @@ const CATEGORIES = [
 ];
 
 export default function CookPage() {
-    const fileInputRef = useRef(null);
-    const [selectedRecipeId, setSelectedRecipeId] = useState(null);
-    const [images, setImages] = useState({});
+    const inputRef = useRef(null);
+    const { recipes, loading, error, addRecipe } = useRecipes();
     const [selectedCategory, setSelectedCategory] = useState("all");
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [draft, setDraft] = useState({ name: "", category: "main", image: "" });
 
-    const saveImage = (recipeId, source) => setImages((current) => ({ ...current, [recipeId]: source }));
+    const setImageFromFile = (file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => setDraft((current) => ({ ...current, image: reader.result }));
+        reader.readAsDataURL(file);
+    };
 
-    const chooseImage = async (recipeId) => {
+    const chooseImage = async () => {
         if (!Capacitor.isNativePlatform()) {
-            setSelectedRecipeId(recipeId);
-            fileInputRef.current?.click();
+            inputRef.current?.click();
             return;
         }
-
         try {
             await Camera.requestPermissions({ permissions: ["camera", "photos"] });
             const photo = await Camera.getPhoto({
                 quality: 85,
-                allowEditing: false,
                 resultType: CameraResultType.DataUrl,
                 source: CameraSource.Prompt,
-                promptLabelHeader: "Ảnh món ăn",
-                promptLabelPhoto: "Chọn từ thư viện",
-                promptLabelPicture: "Chụp ảnh",
             });
-            if (photo.dataUrl) saveImage(recipeId, photo.dataUrl);
-        } catch (error) {
-            if (error?.message !== "User cancelled photos app") console.warn("Không thể chọn ảnh", error);
+            if (photo.dataUrl) setDraft((current) => ({ ...current, image: photo.dataUrl }));
+        } catch (cameraError) {
+            if (cameraError?.message !== "User cancelled photos app") console.warn(cameraError);
         }
     };
 
-    const handleFileChange = (event) => {
-        const file = event.target.files?.[0];
-        if (!file || !selectedRecipeId) return;
-        const reader = new FileReader();
-        reader.onload = () => saveImage(selectedRecipeId, reader.result);
-        reader.readAsDataURL(file);
-        event.target.value = "";
+    const submit = async () => {
+        if (!draft.name.trim()) return;
+        setSaving(true);
+        try {
+            await addRecipe({ name: draft.name.trim(), category: draft.category, image: draft.image });
+            setSelectedCategory(draft.category);
+            setDraft({ name: "", category: "main", image: "" });
+            setDialogOpen(false);
+        } catch {
+            // Error is shown in the recipe list so the user can retry.
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -89,22 +84,9 @@ export default function CookPage() {
             component="main"
             square
             elevation={0}
-            sx={{
-                height: "100%",
-                minHeight: 0,
-                bgcolor: colors.background,
-                overflow: "hidden",
-            }}
+            sx={{ height: "100%", minHeight: 0, position: "relative", overflow: "hidden", bgcolor: colors.background }}
         >
-            <Box
-                sx={{
-                    bgcolor: colors.background,
-                    height: "100%",
-                    minHeight: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                }}
-            >
+            <Box sx={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
                 <Box sx={{ flexShrink: 0, p: 1.5, textAlign: "center", bgcolor: colors.backgroundWarm }}>
                     <Typography
                         sx={{ fontSize: 23, fontFamily: fonts.display, fontWeight: 600, color: colors.primary }}
@@ -123,22 +105,13 @@ export default function CookPage() {
                         “Tiểu nhân sẽ hết mình phục vụ Đại nhân”
                     </Typography>
                 </Box>
-
-                <input ref={fileInputRef} hidden type="file" accept="image/*" onChange={handleFileChange} />
-
                 <Box sx={{ flexShrink: 0, bgcolor: colors.backgroundSoft, borderBottom: `1px solid ${colors.border}` }}>
                     <Tabs
                         value={selectedCategory}
                         onChange={(_, value) => setSelectedCategory(value)}
                         variant="scrollable"
                         scrollButtons={false}
-                        aria-label="Chọn nhóm món ăn"
-                        sx={{
-                            minHeight: 44,
-                            px: 0.5,
-                            "& .MuiTabs-indicator": { display: "none" },
-                            "& .MuiTabs-flexContainer": { gap: 0.25 },
-                        }}
+                        sx={{ minHeight: 44, px: 0.5, "& .MuiTabs-indicator": { display: "none" } }}
                     >
                         {[{ id: "all", label: "All" }, ...CATEGORIES].map((category) => (
                             <Tab
@@ -149,7 +122,6 @@ export default function CookPage() {
                                     minWidth: "auto",
                                     minHeight: 44,
                                     px: 1.1,
-                                    py: 0,
                                     textTransform: "none",
                                     color: colors.textMuted,
                                     fontFamily: fonts.body,
@@ -161,43 +133,47 @@ export default function CookPage() {
                         ))}
                     </Tabs>
                 </Box>
-
-                {/* List products */}
                 <Box
                     sx={{
                         flex: 1,
                         minHeight: 0,
+                        overflowY: "auto",
                         p: 1.25,
-                        pt: 0,
                         display: "flex",
                         flexDirection: "column",
-                        alignItems: "stretch",
                         gap: 1.25,
-                        overflowY: "auto",
                     }}
                 >
+                    {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải món ăn...</Typography>}
+                    {error && <Typography sx={{ color: "error.main" }}>Không thể tải/lưu món: {error}</Typography>}
+                    {!loading && !error && recipes.length === 0 && (
+                        <Typography sx={{ color: colors.textMuted }}>
+                            Chưa có món nào. Hãy thêm món đầu tiên nhé.
+                        </Typography>
+                    )}
                     {CATEGORIES.filter(
                         (category) => selectedCategory === "all" || category.id === selectedCategory,
-                    ).map((category) => (
-                        <Box
-                            key={category.id}
-                            sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.25 }}
-                        >
-                            <Typography
-                                sx={{
-                                    gridColumn: "1 / -1",
-                                    mt: 1,
-                                    color: colors.primary,
-                                    fontFamily: fonts.display,
-                                    fontSize: 17,
-                                    fontWeight: 800,
-                                }}
+                    ).map((category) => {
+                        const items = recipes.filter((recipe) => recipe.category === category.id);
+                        if (items.length === 0 && selectedCategory === "all") return null;
+                        return (
+                            <Box
+                                key={category.id}
+                                sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1.25 }}
                             >
-                                {category.label}
-                            </Typography>
-                            {RECIPES.filter((recipe) => recipe.category === category.id).map((recipe) => {
-                                const image = images[recipe.id];
-                                return (
+                                <Typography
+                                    sx={{
+                                        gridColumn: "1 / -1",
+                                        mt: 1,
+                                        color: colors.primary,
+                                        fontFamily: fonts.display,
+                                        fontSize: 17,
+                                        fontWeight: 800,
+                                    }}
+                                >
+                                    {category.label}
+                                </Typography>
+                                {items.map((recipe) => (
                                     <Paper
                                         key={recipe.id}
                                         elevation={0}
@@ -210,39 +186,19 @@ export default function CookPage() {
                                     >
                                         <Box
                                             sx={{
-                                                position: "relative",
                                                 aspectRatio: "1.2 / 1",
                                                 display: "grid",
                                                 placeItems: "center",
-                                                overflow: "hidden",
-                                                cursor: "pointer",
                                                 bgcolor: colors.backgroundSoft,
-                                                backgroundImage: image ? `url(${image})` : "none",
-                                                backgroundPosition: "center",
-                                                backgroundSize: "cover",
-                                                "&:hover .add-image": {
-                                                    transform: "scale(1.08)",
-                                                    bgcolor: colors.accent,
-                                                },
+                                                background: recipe.image_url
+                                                    ? `center / cover no-repeat url(${recipe.image_url})`
+                                                    : colors.backgroundSoft,
                                             }}
                                         >
-                                            {!image && (
-                                                <IconButton
-                                                    onClick={() => chooseImage(recipe.id)}
-                                                    className="add-image"
-                                                    aria-label={`Thêm ảnh cho ${recipe.name}`}
-                                                    sx={{
-                                                        width: 46,
-                                                        height: 46,
-                                                        bgcolor: colors.white,
-                                                        color: colors.primary,
-                                                        boxShadow: `0 5px 14px ${colors.avatarShadow}`,
-                                                        transition: "transform 180ms ease, background-color 180ms ease",
-                                                        "&:hover": { bgcolor: colors.accent },
-                                                    }}
-                                                >
-                                                    <AddPhotoAlternateRoundedIcon />
-                                                </IconButton>
+                                            {!recipe.image_url && (
+                                                <AddPhotoAlternateRoundedIcon
+                                                    sx={{ fontSize: 34, color: colors.primary }}
+                                                />
                                             )}
                                         </Box>
                                         <Box sx={{ p: 1.1 }}>
@@ -266,34 +222,115 @@ export default function CookPage() {
                                                     color: colors.textMuted,
                                                 }}
                                             >
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-                                                    <AccessTimeRoundedIcon sx={{ fontSize: 14 }} />
-                                                    <Typography sx={{ fontFamily: fonts.body, fontSize: 11 }}>
-                                                        {recipe.time}
-                                                    </Typography>
-                                                </Box>
-                                                <Box
-                                                    sx={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: 0.2,
-                                                        color: colors.accent,
-                                                    }}
+                                                <AccessTimeRoundedIcon sx={{ fontSize: 14 }} />
+                                                <Typography sx={{ fontFamily: fonts.body, fontSize: 11 }}>
+                                                    {recipe.prep_minutes} phút
+                                                </Typography>
+                                                <StarRoundedIcon
+                                                    sx={{ ml: "auto", fontSize: 14, color: colors.accent }}
+                                                />
+                                                <Typography
+                                                    sx={{ fontFamily: fonts.body, fontSize: 11, color: colors.accent }}
                                                 >
-                                                    <StarRoundedIcon sx={{ fontSize: 14 }} />
-                                                    <Typography sx={{ fontFamily: fonts.body, fontSize: 11 }}>
-                                                        {recipe.rating}
-                                                    </Typography>
-                                                </Box>
+                                                    {recipe.rating}
+                                                </Typography>
                                             </Box>
                                         </Box>
                                     </Paper>
-                                );
-                            })}
-                        </Box>
-                    ))}
+                                ))}
+                            </Box>
+                        );
+                    })}
                 </Box>
             </Box>
+            <Fab
+                variant="extended"
+                onClick={() => setDialogOpen(true)}
+                sx={{
+                    position: "absolute",
+                    right: 16,
+                    bottom: 16,
+                    bgcolor: colors.accent,
+                    color: colors.primary,
+                    fontFamily: fonts.display,
+                    fontWeight: 800,
+                    "&:hover": { bgcolor: colors.accent },
+                }}
+            >
+                <AddRoundedIcon sx={{ mr: 0.75 }} /> Thêm món ăn
+            </Fab>
+            <Dialog
+                open={dialogOpen}
+                onClose={() => !saving && setDialogOpen(false)}
+                fullWidth
+                maxWidth="xs"
+                PaperProps={{ sx: { borderRadius: 3, bgcolor: colors.background } }}
+            >
+                <DialogTitle sx={{ fontFamily: fonts.display, fontWeight: 800, color: colors.primary }}>
+                    Thêm món ăn
+                </DialogTitle>
+                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: "12px !important" }}>
+                    <input
+                        ref={inputRef}
+                        hidden
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => setImageFromFile(event.target.files?.[0])}
+                    />
+                    <Box
+                        onClick={chooseImage}
+                        sx={{
+                            aspectRatio: "1.6 / 1",
+                            display: "grid",
+                            placeItems: "center",
+                            cursor: "pointer",
+                            borderRadius: 2.5,
+                            bgcolor: colors.backgroundSoft,
+                            border: `1px dashed ${colors.primary}`,
+                            background: draft.image
+                                ? `center / cover no-repeat url(${draft.image})`
+                                : colors.backgroundSoft,
+                        }}
+                    >
+                        {!draft.image && (
+                            <IconButton>
+                                <AddPhotoAlternateRoundedIcon sx={{ fontSize: 38, color: colors.primary }} />
+                            </IconButton>
+                        )}
+                    </Box>
+                    <TextField
+                        autoFocus
+                        label="Tên món ăn"
+                        value={draft.name}
+                        onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+                    />
+                    <TextField
+                        select
+                        label="Nhóm món"
+                        value={draft.category}
+                        onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
+                    >
+                        {CATEGORIES.map((category) => (
+                            <MenuItem key={category.id} value={category.id}>
+                                {category.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setDialogOpen(false)} disabled={saving}>
+                        Hủy
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={submit}
+                        disabled={saving || !draft.name.trim()}
+                        sx={{ bgcolor: colors.primary }}
+                    >
+                        {saving ? "Đang lưu..." : "Lưu món"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }

@@ -30,3 +30,54 @@ create policy "Users can remove only their location"
 
 alter table public.shared_locations replica identity full;
 alter publication supabase_realtime add table public.shared_locations;
+
+-- Recipes and their images for the Ngự trù section.
+create table if not exists public.recipes (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 1 and 100),
+  category text not null check (category in ('main', 'soup', 'side', 'snack')),
+  image_path text,
+  prep_minutes integer not null default 15 check (prep_minutes between 1 and 1440),
+  rating numeric(2,1) not null default 5.0 check (rating between 0 and 5),
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.recipes enable row level security;
+
+drop policy if exists "Signed-in users can see recipes" on public.recipes;
+create policy "Signed-in users can see recipes"
+  on public.recipes for select to authenticated using (true);
+
+drop policy if exists "Signed-in users can add recipes" on public.recipes;
+create policy "Signed-in users can add recipes"
+  on public.recipes for insert to authenticated
+  with check ((select auth.uid()) = created_by);
+
+drop policy if exists "Creators can edit recipes" on public.recipes;
+create policy "Creators can edit recipes"
+  on public.recipes for update to authenticated
+  using ((select auth.uid()) = created_by)
+  with check ((select auth.uid()) = created_by);
+
+drop policy if exists "Creators can remove recipes" on public.recipes;
+create policy "Creators can remove recipes"
+  on public.recipes for delete to authenticated
+  using ((select auth.uid()) = created_by);
+
+insert into storage.buckets (id, name, public)
+values ('recipe-images', 'recipe-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Signed-in users can see recipe images" on storage.objects;
+create policy "Signed-in users can see recipe images"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'recipe-images');
+
+drop policy if exists "Users can upload their recipe images" on storage.objects;
+create policy "Users can upload their recipe images"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'recipe-images'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
