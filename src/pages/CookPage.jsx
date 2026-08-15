@@ -21,6 +21,7 @@ import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
+import { useNavigate } from "react-router-dom";
 import { useRecipes } from "../hooks/useRecipes";
 import { colors, fonts } from "../theme";
 
@@ -33,6 +34,7 @@ const CATEGORIES = [
 
 export default function CookPage() {
     const inputRef = useRef(null);
+    const navigate = useNavigate();
     const { recipes, loading, error, addRecipe } = useRecipes();
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -177,11 +179,13 @@ export default function CookPage() {
                                     <Paper
                                         key={recipe.id}
                                         elevation={0}
+                                        onClick={() => navigate(`/cook/${recipe.id}`)}
                                         sx={{
                                             overflow: "hidden",
                                             borderRadius: 2,
                                             bgcolor: colors.white,
                                             border: `1px solid ${colors.border}`,
+                                            cursor: "pointer",
                                         }}
                                     >
                                         <Box
@@ -267,7 +271,7 @@ export default function CookPage() {
                 PaperProps={{ sx: { borderRadius: 3, bgcolor: colors.background } }}
             >
                 <DialogTitle sx={{ fontFamily: fonts.display, fontWeight: 800, color: colors.primary }}>
-                    Thêm món ăn
+                    Chuẩn tấu
                 </DialogTitle>
                 <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: "12px !important" }}>
                     <input
