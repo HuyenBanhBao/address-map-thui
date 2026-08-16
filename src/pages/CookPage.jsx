@@ -409,12 +409,16 @@ export default function CookPage() {
                 </DialogTitle>
                 <DialogContent sx={{ pt: "8px !important" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                    <Typography sx={{ color: colors.textMuted, fontSize: 13 }}>
-                        Chọn những món Đại nhân muốn ăn.
-                    </Typography>
-                    <Button size="small" onClick={() => setSelectedOrderIds([])} sx={{ color: colors.primary, flexShrink: 0 }}>
-                        Bỏ chọn tất cả
-                    </Button>
+                        <Typography sx={{ color: colors.textMuted, fontSize: 13 }}>
+                            Chọn những món Đại nhân muốn ăn.
+                        </Typography>
+                        <Button
+                            size="small"
+                            onClick={() => setSelectedOrderIds([])}
+                            sx={{ color: colors.primary, flexShrink: 0 }}
+                        >
+                            Bỏ chọn tất cả
+                        </Button>
                     </Box>
                     {recipes.map((recipe) => (
                         <FormControlLabel

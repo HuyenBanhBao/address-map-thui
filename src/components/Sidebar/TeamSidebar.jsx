@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import {
     Avatar,
     Box,
@@ -13,16 +14,18 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { keyframes } from "@mui/system";
 // --------- Icons ---------
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import LocalDiningRoundedIcon from "@mui/icons-material/LocalDiningRounded";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 import HandymanRoundedIcon from "@mui/icons-material/HandymanRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
-import { Link, useNavigate } from "react-router-dom";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 // ------------------
 import { TEAM_MEMBERS } from "../../hooks/useSharedLocations";
@@ -32,6 +35,7 @@ import { colors, gradients, fonts } from "../../theme";
 const STYLE_BTN = {
     borderRadius: 1,
     display: "flex",
+    textDecoration: "none",
     alignItems: "center",
     px: 1.5,
     py: 0.75,
@@ -40,11 +44,26 @@ const STYLE_BTN = {
     boxShadow: colors.boxShadowBtn,
 };
 
+const orderAlertPulse = keyframes`
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-14deg); }
+    40% { transform: rotate(12deg); }
+    60% { transform: rotate(-8deg); }
+    80% { transform: rotate(6deg); }
+`;
+
 export default function TeamSidebar({ name, onNameChange, people, sharing, onShare, onStop, onFocus, onClose }) {
+    const routerLocation = useLocation();
     const [selectedFeature, setSelectedFeature] = useState("map");
     const [orderDialogOpen, setOrderDialogOpen] = useState(false);
     const { orderedRecipes } = useRecipeOrders();
     const navigate = useNavigate();
+    useEffect(() => {
+        if (routerLocation.pathname.startsWith("/cook")) setSelectedFeature("kitchen");
+        else if (routerLocation.pathname.startsWith("/repair")) setSelectedFeature("office");
+        else if (routerLocation.pathname.startsWith("/toshiba")) setSelectedFeature("toshiba");
+        else if (routerLocation.pathname === "/") setSelectedFeature("map");
+    }, [routerLocation.pathname]);
     const avatarSx = (member) => ({
         width: 32,
         height: 32,
@@ -117,7 +136,7 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                         Mập xinh chốn đâu
                     </Typography>
                 </Box>
-                {/* --- Button 2 --- */}
+                {/* --- Button 2 ---
                 <Box
                     onClick={() => setSelectedFeature("timeline")}
                     sx={{
@@ -139,7 +158,7 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                     >
                         Dấu vết để lại
                     </Typography>
-                </Box>
+                </Box> */}
                 {/* --- Button 3 --- */}
                 <Box
                     component={Link}
@@ -196,6 +215,34 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                         Nội Vụ Phủ
                     </Typography>
                 </Box>
+                {/* --- Button 5 --- */}
+                <Box
+                    component={Link}
+                    to="/toshiba"
+                    onClick={() => {
+                        setSelectedFeature("toshiba");
+                        onClose?.();
+                    }}
+                    sx={{
+                        ...STYLE_BTN,
+                        bgcolor: selectedFeature === "toshiba" ? colors.primary : "transparent",
+                        color: selectedFeature === "toshiba" ? colors.backgroundSoft : colors.text,
+                        cursor: "pointer",
+                    }}
+                >
+                    <WarehouseIcon sx={{ minWidth: 36, color: "inherit" }} />
+                    <Typography
+                        variant="span"
+                        sx={{
+                            //
+                            fontWeight: 400,
+                            fontFamily: fonts.display,
+                            color: "inherit",
+                        }}
+                    >
+                        Quốc khố
+                    </Typography>
+                </Box>
             </List>
 
             <Box
@@ -203,11 +250,32 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                 sx={{
                     ...STYLE_BTN,
                     mb: 0,
-                    bgcolor: "transparent",
+                    position: "relative",
+                    bgcolor: colors.accent,
                     color: colors.text,
                     cursor: "pointer",
                 }}
             >
+                {orderedRecipes.length > 0 && (
+                    <Box
+                        component="span"
+                        sx={{
+                            position: "absolute",
+                            top: -6,
+                            right: -6,
+                            width: 18,
+                            height: 18,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: colors.primary,
+                            transformOrigin: "top center",
+                            animation: `${orderAlertPulse} 1.2s ease-in-out infinite`,
+                        }}
+                    >
+                        <NotificationsActiveIcon sx={{ fontSize: 21 }} />
+                    </Box>
+                )}
                 <ReceiptLongRoundedIcon sx={{ minWidth: 36, color: "inherit" }} />
                 <Typography sx={{ flex: 1, fontFamily: fonts.display, fontWeight: 500, color: "inherit" }}>
                     Đại nhân order

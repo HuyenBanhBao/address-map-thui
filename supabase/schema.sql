@@ -171,3 +171,37 @@ drop policy if exists "Signed-in users can add recipe order items" on public.rec
 create policy "Signed-in users can add recipe order items"
   on public.recipe_order_items for insert to authenticated
   with check (exists (select 1 from public.recipe_orders where recipe_orders.id = order_id and recipe_orders.created_by = (select auth.uid())));
+
+
+-- Nội vụ phủ
+create table if not exists public.household_tasks (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (char_length(title) between 1 and 150),
+  detail text not null default '',
+  task_group text not null check (task_group in ('house', 'repair', 'plan')),
+  priority text not null check (priority in ('Bạn', 'Nhẹ nhàng', 'Cần làm', 'Gấp')),
+  assigned_to text not null check (assigned_to in ('Mập xinh', 'Vợ thúi', 'Cả hai')),
+  due_date date not null,
+  completed boolean not null default false,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.household_tasks enable row level security;
+
+drop policy if exists "Signed-in users can see household tasks" on public.household_tasks;
+create policy "Signed-in users can see household tasks"
+  on public.household_tasks for select to authenticated using (true);
+
+drop policy if exists "Signed-in users can add household tasks" on public.household_tasks;
+create policy "Signed-in users can add household tasks"
+  on public.household_tasks for insert to authenticated
+  with check ((select auth.uid()) = created_by);
+
+drop policy if exists "Signed-in users can edit household tasks" on public.household_tasks;
+create policy "Signed-in users can edit household tasks"
+  on public.household_tasks for update to authenticated using (true) with check (true);
+
+drop policy if exists "Signed-in users can remove household tasks" on public.household_tasks;
+create policy "Signed-in users can remove household tasks"
+  on public.household_tasks for delete to authenticated using (true);

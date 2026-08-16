@@ -4,6 +4,7 @@ import MapPage from "./pages/MapPage";
 import CookPage from "./pages/CookPage";
 import RepairPage from "./pages/RepairPage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
+import ToshibaPage from "./pages/ToshibaPage";
 
 export default function App() {
     return (
@@ -13,6 +14,7 @@ export default function App() {
                 <Route path="/cook" element={<CookPage />} />
                 <Route path="/cook/:recipeId" element={<RecipeDetailPage />} />
                 <Route path="/repair" element={<RepairPage />} />
+                <Route path="/toshiba" element={<ToshibaPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
