@@ -205,3 +205,33 @@ create policy "Signed-in users can edit household tasks"
 drop policy if exists "Signed-in users can remove household tasks" on public.household_tasks;
 create policy "Signed-in users can remove household tasks"
   on public.household_tasks for delete to authenticated using (true);
+
+-- Quốc khố
+create table if not exists public.inventory_items (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 1 and 120),
+  category text not null check (category in ('fridge', 'dry', 'spice', 'laundry')),
+  amount text not null default '',
+  stock_percent integer not null default 50 check (stock_percent between 0 and 100),
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.inventory_items enable row level security;
+
+drop policy if exists "Signed-in users can see inventory items" on public.inventory_items;
+create policy "Signed-in users can see inventory items"
+  on public.inventory_items for select to authenticated using (true);
+
+drop policy if exists "Signed-in users can add inventory items" on public.inventory_items;
+create policy "Signed-in users can add inventory items"
+  on public.inventory_items for insert to authenticated
+  with check ((select auth.uid()) = created_by);
+
+drop policy if exists "Signed-in users can edit inventory items" on public.inventory_items;
+create policy "Signed-in users can edit inventory items"
+  on public.inventory_items for update to authenticated using (true) with check (true);
+
+drop policy if exists "Signed-in users can remove inventory items" on public.inventory_items;
+create policy "Signed-in users can remove inventory items"
+  on public.inventory_items for delete to authenticated using (true);

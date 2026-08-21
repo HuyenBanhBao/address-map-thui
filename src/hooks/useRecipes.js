@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabase";
+import { createId } from "../utils/createId";
 
 const BUCKET = "recipe-images";
 
@@ -24,7 +25,7 @@ async function uploadImage(dataUrl, userId) {
     if (!dataUrl) return null;
     const blob = await fetch(dataUrl).then((response) => response.blob());
     const extension = blob.type.split("/")[1] || "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+    const path = `${userId}/${createId()}.${extension}`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, upsert: false });
     if (error) throw error;
     return path;

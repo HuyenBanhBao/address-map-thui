@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Box, Button, IconButton, Paper, TextField, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, TextField, Typography } from "@mui/material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -20,6 +20,7 @@ export default function RecipeDetailPage() {
     const [newStep, setNewStep] = useState("");
     const [message, setMessage] = useState("");
     const [isEditing, setIsEditing] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const detail = useRecipeDetail(recipeId);
     const notifyError = (error) => setMessage(error.message || "Không thể lưu thay đổi.");
 
@@ -91,19 +92,16 @@ export default function RecipeDetailPage() {
                         Ngự trù
                     </Button>
                     {canEdit && (
-                        <Button
-                            variant={editing ? "contained" : "outlined"}
-                            onClick={() => setIsEditing((current) => !current)}
-                            sx={{
-                                color: editing ? colors.white : colors.primary,
-                                borderColor: colors.primary,
-                                fontWeight: 600,
-                                bgcolor: editing ? colors.primary : "transparent",
-                                fontFamily: fonts.display,
-                            }}
-                        >
-                            {editing ? "Xong" : "Sửa món"}
-                        </Button>
+                        <Box sx={{ display: "flex", gap: 0.75 }}>
+                            <Button
+                                variant={editing ? "contained" : "outlined"}
+                                onClick={() => setIsEditing((current) => !current)}
+                                sx={{ color: editing ? colors.white : colors.primary, borderColor: colors.primary, fontWeight: 600, bgcolor: editing ? colors.primary : "transparent", fontFamily: fonts.display }}
+                            >
+                                {editing ? "Xong" : "Sửa món"}
+                            </Button>
+                            {editing && <IconButton aria-label="Xóa món ăn" onClick={() => setDeleteOpen(true)} sx={{ color: colors.colorError, border: `1px solid ${colors.colorError}` }}><DeleteOutlineRoundedIcon /></IconButton>}
+                        </Box>
                     )}
                 </Box>
                 <Box
@@ -288,6 +286,32 @@ export default function RecipeDetailPage() {
                     </Box>
                 )}
             </Box>
+            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 4 } }}>
+                <DialogTitle sx={{ fontFamily: fonts.display, color: colors.colorError, fontWeight: 800 }}>Xóa món ăn?</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ color: colors.text }}>Bạn có chắc muốn xóa</Typography>
+                    <Typography sx={{ mt: 0.7, fontFamily: fonts.display, fontSize: 17, fontWeight: 800, color: colors.primary }}>“{recipe.name}”</Typography>
+                    <Typography sx={{ mt: 0.75, fontSize: 12, color: colors.textMuted }}>Công thức, nguyên liệu và các bước nấu của món này sẽ bị xóa.</Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setDeleteOpen(false)} sx={{ color: colors.textMuted }}>Giữ lại</Button>
+                    <Button
+                        variant="contained"
+                        onClick={async () => {
+                            try {
+                                await detail.deleteRecipe();
+                                navigate("/cook");
+                            } catch (deleteError) {
+                                notifyError(deleteError);
+                                setDeleteOpen(false);
+                            }
+                        }}
+                        sx={{ bgcolor: colors.colorError, fontFamily: fonts.display, "&:hover": { bgcolor: colors.colorError } }}
+                    >
+                        Xóa món
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }
