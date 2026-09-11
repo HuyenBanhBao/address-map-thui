@@ -235,3 +235,33 @@ create policy "Signed-in users can edit inventory items"
 drop policy if exists "Signed-in users can remove inventory items" on public.inventory_items;
 create policy "Signed-in users can remove inventory items"
   on public.inventory_items for delete to authenticated using (true);
+
+-- Truyá»n ThÃ¡i Y: há»“ sÆ¡ sá»©c khá»e gia Ä‘Ã¬nh.
+create table if not exists public.family_health_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 1 and 100),
+  relationship text not null default '',
+  allergies text[] not null default '{}',
+  conditions jsonb not null default '[]'::jsonb,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.family_health_members enable row level security;
+
+drop policy if exists "Signed-in users can see family health" on public.family_health_members;
+create policy "Signed-in users can see family health"
+  on public.family_health_members for select to authenticated using (true);
+
+drop policy if exists "Signed-in users can add family health" on public.family_health_members;
+create policy "Signed-in users can add family health"
+  on public.family_health_members for insert to authenticated
+  with check ((select auth.uid()) = created_by);
+
+drop policy if exists "Signed-in users can edit family health" on public.family_health_members;
+create policy "Signed-in users can edit family health"
+  on public.family_health_members for update to authenticated using (true) with check (true);
+
+drop policy if exists "Signed-in users can remove family health" on public.family_health_members;
+create policy "Signed-in users can remove family health"
+  on public.family_health_members for delete to authenticated using (true);

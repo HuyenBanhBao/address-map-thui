@@ -37,7 +37,7 @@ export default function AppShell() {
                 overflow: "hidden",
             }}
         >
-            <AppHeader status={location.status} onMenuOpen={() => setDrawerOpen(true)} />
+            <AppHeader onMenuOpen={() => setDrawerOpen(true)} />
             <Box sx={{ minHeight: 0, background: gradients.workspace }}>
                 <Drawer
                     open={drawerOpen}

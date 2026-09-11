@@ -132,13 +132,58 @@ export default function RepairPage() {
                 }}
             >
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                        <Typography sx={{ fontFamily: fonts.display, fontSize: 23, fontWeight: 800 }}>
-                            Nội Vụ Phủ
+                    <Box sx={{ flex: 1, minWidth: 0, pr: 1 }}>
+                        <Box
+                            sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.55,
+                                px: 0.85,
+                                py: 0.35,
+                                mb: 1.25,
+                                borderRadius: 99,
+                                bgcolor: colors.headerOverlay,
+                                border: `1px solid ${colors.headerBorder}`,
+                            }}
+                        >
+                            <AssignmentTurnedInRoundedIcon sx={{ fontSize: 14, color: colors.accent }} />
+                            <Typography
+                                sx={{
+                                    fontFamily: fonts.body,
+                                    fontSize: 9.5,
+                                    fontWeight: 700,
+                                    lineHeight: 1,
+                                    letterSpacing: ".12em",
+                                    opacity: 0.9,
+                                }}
+                            >
+                                NHẬT TRÌNH GIA ĐÌNH
+                            </Typography>
+                        </Box>
+                        <Typography
+                            sx={{
+                                fontFamily: fonts.display,
+                                fontSize: { xs: 21, sm: 23 },
+                                fontWeight: 800,
+                                lineHeight: 1.15,
+                                textShadow: `0 3px 12px ${colors.markerShadow}`,
+                            }}
+                        >
+                            Sổ tay việc nhà
                         </Typography>
-                        <Typography sx={{ mt: 0.25, fontFamily: fonts.body, fontSize: 12, opacity: 0.82 }}>
-                            Sổ tay việc nhà của Đại nhân
-                        </Typography>
+                        {/* <Typography
+                            sx={{
+                                mt: 0.45,
+                                fontFamily: fonts.body,
+                                fontSize: 11.5,
+                                lineHeight: 1.35,
+                                opacity: 0.76,
+                            }}
+                        >
+                            {tasks.length - completed > 0
+                                ? `${tasks.length - completed} việc đang chờ Đại nhân xử lý`
+                                : "Mọi việc hôm nay đã được thu xếp gọn gàng"}
+                        </Typography> */}
                     </Box>
                     <Box
                         sx={{

@@ -155,12 +155,44 @@ export default function ToshibaPage() {
                 }}
             >
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <Box>
-                        <Typography sx={{ fontFamily: fonts.display, fontSize: 23, fontWeight: 800 }}>
-                            Quốc khố
-                        </Typography>
-                        <Typography sx={{ mt: 0.25, fontFamily: fonts.body, fontSize: 12, opacity: 0.82 }}>
-                            Kho lương của Đại nhân
+                    <Box sx={{ flex: 1, minWidth: 0, pr: 1 }}>
+                        <Box
+                            sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.55,
+                                px: 0.85,
+                                py: 0.35,
+                                mb: 1.25,
+                                borderRadius: 99,
+                                bgcolor: colors.headerOverlay,
+                                border: `1px solid ${colors.headerBorder}`,
+                            }}
+                        >
+                            <Inventory2RoundedIcon sx={{ fontSize: 14, color: colors.accent }} />
+                            <Typography
+                                sx={{
+                                    fontFamily: fonts.body,
+                                    fontSize: 9.5,
+                                    fontWeight: 700,
+                                    lineHeight: 1,
+                                    letterSpacing: ".12em",
+                                    opacity: 0.9,
+                                }}
+                            >
+                                SỔ KÊ QUỐC KHỐ
+                            </Typography>
+                        </Box>
+                        <Typography
+                            sx={{
+                                fontFamily: fonts.display,
+                                fontSize: { xs: 21, sm: 23 },
+                                fontWeight: 800,
+                                lineHeight: 1.15,
+                                textShadow: `0 3px 12px ${colors.markerShadow}`,
+                            }}
+                        >
+                            Kho lương Đại nhân
                         </Typography>
                     </Box>
                     <Box

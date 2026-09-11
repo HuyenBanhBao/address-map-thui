@@ -1,39 +1,65 @@
-import { AppBar, Box, IconButton, Toolbar, Typography } from "@mui/material";
+import { AppBar, IconButton, Toolbar, Typography } from "@mui/material";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
-import { colors, gradients, fonts } from "../../theme";
+import { useLocation } from "react-router-dom";
+import { colors, fonts } from "../../theme";
 
-export default function AppHeader({ status, onMenuOpen }) {
+function pageTitle(pathname) {
+    if (pathname === "/") return "Thôn trang của BuBu's";
+    if (pathname.startsWith("/map")) return "Mập xinh chốn đâu";
+    if (pathname.startsWith("/cook/")) return "Bí kíp món ăn";
+    if (pathname.startsWith("/cook")) return "Ngự trù";
+    if (pathname.startsWith("/repair")) return "Nội Vụ Phủ";
+    if (pathname.startsWith("/toshiba")) return "Quốc khố";
+    if (pathname.startsWith("/health")) return "Truyền Thái Y";
+    return "Thôn trang của BuBu's";
+}
+
+export default function AppHeader({ onMenuOpen }) {
+    const { pathname } = useLocation();
+
     return (
         <AppBar
             position="static"
             elevation={0}
-            sx={{ background: gradients.header, borderBottom: `1px solid ${colors.headerBorder}` }}
+            sx={{
+                color: colors.primary,
+                background: `linear-gradient(135deg, ${colors.background}, ${colors.backgroundWarm})`,
+                borderBottom: `1px solid ${colors.border}`,
+            }}
         >
-            <Toolbar sx={{ minHeight: { xs: 64, sm: 72 }, gap: 1.75, px: { xs: 1.25, sm: 2 } }}>
+            <Toolbar sx={{ minHeight: { xs: 60, sm: 68 }, px: { xs: 1.5, sm: 2.25 } }}>
+                <Typography
+                    sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontFamily: fonts.display,
+                        fontSize: { xs: 22, sm: 26 },
+                        fontWeight: 800,
+                        color: colors.primary,
+                    }}
+                >
+                    {pageTitle(pathname)}
+                </Typography>
                 <IconButton
-                    aria-label="Mở chức năng"
+                    aria-label="Mở danh sách chức năng"
                     onClick={onMenuOpen}
-                    sx={{ color: colors.white, bgcolor: colors.headerOverlay }}
+                    sx={{
+                        ml: 1,
+                        width: 42,
+                        height: 42,
+                        flexShrink: 0,
+                        color: colors.primary,
+                        bgcolor: colors.white,
+                        border: `1px solid ${colors.border}`,
+                        boxShadow: `0 5px 18px ${colors.avatarShadow}`,
+                        "&:hover": { bgcolor: colors.white },
+                    }}
                 >
                     <MenuRoundedIcon />
                 </IconButton>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography
-                        variant="span"
-                        sx={{
-                            // display: { xs: "none", sm: "block" },
-                            display: "block",
-                            fontSize: 18,
-                            color: colors.sidebarStart,
-                            fontWeight: 800,
-                            letterSpacing: ".11em",
-                            lineHeight: 1,
-                            fontFamily: fonts.display,
-                        }}
-                    >
-                        HOME ĐUÝT'S THÚI
-                    </Typography>
-                </Box>
             </Toolbar>
         </AppBar>
     );
