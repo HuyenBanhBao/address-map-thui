@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { useRecipes } from "../hooks/useRecipes";
 import { useRecipeOrders } from "../hooks/useRecipeOrders";
 import { colors, fonts } from "../theme";
+import familyHeaderImage from "../assets/cook_2.png";
 
 const CATEGORIES = [
     { id: "main", label: "Món chính" },
@@ -115,23 +116,84 @@ export default function CookPage() {
             sx={{ height: "100%", minHeight: 0, position: "relative", overflow: "hidden", bgcolor: colors.background }}
         >
             <Box sx={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
-                <Box sx={{ flexShrink: 0, p: 1.5, textAlign: "center", bgcolor: colors.backgroundWarm }}>
-                    <Typography
-                        sx={{ fontSize: 23, fontFamily: fonts.display, fontWeight: 600, color: colors.primary }}
-                    >
-                        Mời Đại nhân ngự thiện
-                    </Typography>
-                    <Typography
+                <Box
+                    sx={{
+                        position: "relative",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        p: 1.5,
+                        borderBottom: `1px solid ${colors.border}`,
+                        bgcolor: colors.backgroundWarm,
+                        overflow: "hidden",
+                    }}
+                >
+                    <Box
                         sx={{
-                            fontSize: 13,
-                            color: colors.textMuted,
-                            fontFamily: fonts.body,
-                            fontWeight: 300,
-                            fontStyle: "italic",
+                            position: "absolute",
+                            width: 150,
+                            height: 150,
+                            right: -45,
+                            top: -65,
+                            borderRadius: "50%",
+                            bgcolor: `${colors.accent}2c`,
+                        }}
+                    />
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            width: 130,
+                            height: 130,
+                            left: -45,
+                            bottom: -65,
+                            borderRadius: "50%",
+                            bgcolor: `${colors.accent}1c`,
+                        }}
+                    />
+                    <Box sx={{ flexShrink: 0, p: 1.5, textAlign: "center" }}>
+                        <Typography
+                            sx={{ fontSize: 23, fontFamily: fonts.display, fontWeight: 600, color: colors.primary }}
+                        >
+                            Đại nhân ngự thiện
+                        </Typography>
+                        <Typography
+                            sx={{
+                                fontSize: 13,
+                                color: colors.textMuted,
+                                fontFamily: fonts.body,
+                                fontWeight: 300,
+                                fontStyle: "italic",
+                            }}
+                        >
+                            “Tiểu nhân sẽ hết mình phục vụ ”
+                        </Typography>
+                    </Box>
+                    <Box
+                        sx={{
+                            width: 60,
+                            height: 60,
+                            placeItems: "center",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            borderRadius: 3,
+                            bgcolor: colors.headerOverlay,
+                            border: `1px solid ${colors.headerBorder}`,
                         }}
                     >
-                        “Tiểu nhân sẽ hết mình phục vụ Đại nhân”
-                    </Typography>
+                        <Box
+                            component="img"
+                            src={familyHeaderImage}
+                            alt="Gia đình BuBu's and DuDu's"
+                            sx={{
+                                width: 130,
+                                height: 130,
+                                objectFit: "contain",
+                                filter: `drop-shadow(0 3px 5px ${colors.avatarShadow})`,
+                            }}
+                        />
+                    </Box>
                 </Box>
                 <Box sx={{ flexShrink: 0, bgcolor: colors.backgroundSoft, borderBottom: `1px solid ${colors.border}` }}>
                     <Tabs
@@ -163,15 +225,52 @@ export default function CookPage() {
                 </Box>
                 <Box
                     sx={{
+                        position: "relative",
                         flex: 1,
                         minHeight: 0,
                         overflowY: "auto",
+                        overflowX: "hidden",
                         p: 1.25,
                         display: "flex",
                         flexDirection: "column",
                         gap: 1.25,
+                        isolation: "isolate",
+                        "& > :not(.cook-decoration)": {
+                            position: "relative",
+                            zIndex: 1,
+                        },
                     }}
                 >
+                    <Box
+                        className="cook-decoration"
+                        sx={{
+                            position: "absolute",
+                            zIndex: 0,
+                            width: 400,
+                            height: 400,
+                            left: "-40%",
+                            top: "-40%",
+                            borderRadius: "50%",
+                            bgcolor: `${colors.primaryLight}2c`,
+                            pointerEvents: "none",
+                        }}
+                    />
+
+                    <Box
+                        className="cook-decoration"
+                        sx={{
+                            position: "absolute",
+                            zIndex: 0,
+                            width: 200,
+                            height: 200,
+                            left: "40%",
+                            top: "40%",
+                            borderRadius: "50%",
+                            bgcolor: `${colors.accent}3c`,
+                            pointerEvents: "none",
+                        }}
+                    />
+
                     {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải món ăn...</Typography>}
                     {error && <Typography sx={{ color: "error.main" }}>Không thể tải/lưu món: {error}</Typography>}
                     {!loading && !error && recipes.length === 0 && (

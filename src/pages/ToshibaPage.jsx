@@ -27,6 +27,7 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { keyframes } from "@mui/system";
 import { useInventoryItems } from "../hooks/useInventoryItems";
 import { colors, fonts } from "../theme";
+import quocKhoImage from "../assets/quoc-kho.png";
 
 const CATEGORIES = [
     { id: "all", label: "Tất cả" },
@@ -148,12 +149,33 @@ export default function ToshibaPage() {
         >
             <Box
                 sx={{
+                    position: "relative",
                     flexShrink: 0,
+                    overflow: "hidden",
                     p: 1.5,
                     color: colors.white,
                     background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                    isolation: "isolate",
+                    "& > :not(.toshiba-decoration)": {
+                        position: "relative",
+                        zIndex: 1,
+                    },
                 }}
             >
+                <Box
+                    className="toshiba-decoration"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        left: "-20%",
+                        top: "-40%",
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Box sx={{ flex: 1, minWidth: 0, pr: 1 }}>
                         <Box
@@ -194,51 +216,60 @@ export default function ToshibaPage() {
                         >
                             Kho lương Đại nhân
                         </Typography>
+                        <Box
+                            onClick={() => lowItems.length && setLowStockOpen(true)}
+                            sx={{
+                                mt: 1.5,
+                                px: 1.1,
+                                py: 0.8,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                borderRadius: 2.5,
+                                bgcolor: colors.headerOverlay,
+                                cursor: lowItems.length ? "pointer" : "default",
+                            }}
+                        >
+                            <NotificationsActiveIcon
+                                sx={{
+                                    color: lowItems.length ? colors.accent : colors.white,
+                                    fontSize: 20,
+                                    transformOrigin: "top center",
+                                    animation: lowItems.length ? `${alertBellShake} 1.2s ease-in-out infinite` : "none",
+                                }}
+                            />
+                            <Typography sx={{ flex: 1, fontFamily: fonts.body, fontSize: 12 }}>
+                                {lowItems.length
+                                    ? `${lowItems.length} món đồ sắp hết`
+                                    : "Quốc khố đang đầy đủ, Đại nhân yên tâm."}
+                            </Typography>
+                            {lowItems.length > 0 && (
+                                <Typography sx={{ fontFamily: fonts.display, fontSize: 11 }}>Xem ›</Typography>
+                            )}
+                        </Box>
                     </Box>
                     <Box
                         sx={{
-                            width: 52,
-                            height: 52,
+                            width: 100,
+                            height: 100,
                             display: "grid",
                             placeItems: "center",
                             borderRadius: "50%",
                             bgcolor: colors.headerOverlay,
-                            border: `1px solid ${colors.headerBorder}`,
                         }}
                     >
-                        <Inventory2RoundedIcon />
+                        <Box
+                            component="img"
+                            src={quocKhoImage}
+                            alt="Quốc khố"
+                            sx={{
+                                width: 110,
+                                height: 110,
+                                objectFit: "contain",
+                                filter: `drop-shadow(0 3px 5px ${colors.avatarShadow})`,
+                            }}
+                        />
                     </Box>
-                </Box>
-                <Box
-                    onClick={() => lowItems.length && setLowStockOpen(true)}
-                    sx={{
-                        mt: 1.5,
-                        px: 1.1,
-                        py: 0.8,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        borderRadius: 2.5,
-                        bgcolor: colors.headerOverlay,
-                        cursor: lowItems.length ? "pointer" : "default",
-                    }}
-                >
-                    <NotificationsActiveIcon
-                        sx={{
-                            color: lowItems.length ? colors.accent : colors.white,
-                            fontSize: 20,
-                            transformOrigin: "top center",
-                            animation: lowItems.length ? `${alertBellShake} 1.2s ease-in-out infinite` : "none",
-                        }}
-                    />
-                    <Typography sx={{ flex: 1, fontFamily: fonts.body, fontSize: 12 }}>
-                        {lowItems.length
-                            ? `${lowItems.length} món đồ sắp hết`
-                            : "Quốc khố đang đầy đủ, Đại nhân yên tâm."}
-                    </Typography>
-                    {lowItems.length > 0 && (
-                        <Typography sx={{ fontFamily: fonts.display, fontSize: 11 }}>Xem ›</Typography>
-                    )}
                 </Box>
             </Box>
             <Box sx={{ flexShrink: 0, bgcolor: colors.backgroundWarm, borderBottom: `1px solid ${colors.border}` }}>
@@ -270,6 +301,7 @@ export default function ToshibaPage() {
             </Box>
             <Box
                 sx={{
+                    position: "relative",
                     flex: 1,
                     minHeight: 0,
                     overflowY: "auto",
@@ -280,8 +312,41 @@ export default function ToshibaPage() {
                     gridAutoRows: "max-content",
                     alignContent: "start",
                     gap: 1.25,
+                    isolation: "isolate",
+                    "& > :not(.toshiba-decoration)": {
+                        position: "relative",
+                        zIndex: 1,
+                    },
                 }}
             >
+                <Box
+                    className="toshiba-decoration"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 400,
+                        height: 400,
+                        left: "-40%",
+                        top: "-40%",
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}2c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    className="toshiba-decoration"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        left: "40%",
+                        top: "40%",
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
                 {loading && <Typography sx={{ color: colors.textMuted }}>Đang kiểm kê Quốc khố...</Typography>}
                 {error && <Typography sx={{ color: colors.colorError }}>Không thể tải Quốc khố: {error}</Typography>}
                 {!loading && !error && !visibleItems.length && (

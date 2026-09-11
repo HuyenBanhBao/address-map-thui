@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Box,
     Button,
@@ -25,6 +25,19 @@ import { useHouseholdTasks } from "../hooks/useHouseholdTasks";
 import { useInventoryItems } from "../hooks/useInventoryItems";
 import { useRecipeOrders } from "../hooks/useRecipeOrders";
 import { colors, fonts, gradients } from "../theme";
+
+const HOUR_MS = 60 * 60 * 1000;
+const FAMILY_IMAGE_MODULES = import.meta.glob(["../assets/gia_dinh_*.png", "../assets/Gia_dinh_*.png"], {
+    eager: true,
+    import: "default",
+});
+const FAMILY_IMAGES = Object.entries(FAMILY_IMAGE_MODULES)
+    .sort(([firstPath], [secondPath]) => {
+        const firstNumber = Number(firstPath.match(/_(\d+)\.png$/i)?.[1] || 0);
+        const secondNumber = Number(secondPath.match(/_(\d+)\.png$/i)?.[1] || 0);
+        return firstNumber - secondNumber;
+    })
+    .map(([, image]) => image);
 
 const QUOTES = [
     "Nhà là nơi những điều nhỏ bé luôn được quan tâm.",
@@ -63,28 +76,47 @@ const QUOTES = [
     "Mỗi góc nhỏ được chăm chút đều mang theo một chút yêu thương.",
 ];
 
-function getVietnameseDate() {
+function getVietnameseDate(hourIndex) {
     const now = new Date();
     return {
         day: now.getDate().toString().padStart(2, "0"),
         month: `THÁNG ${now.getMonth() + 1}`,
         weekday: now.toLocaleDateString("vi-VN", { weekday: "long" }),
         full: now.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }),
-        quote: QUOTES[now.getDate() % QUOTES.length],
+        quote: QUOTES[hourIndex % QUOTES.length],
     };
 }
 
 export default function HomePage() {
     const [allFeaturesOpen, setAllFeaturesOpen] = useState(false);
+    const [hourIndex, setHourIndex] = useState(() => Math.floor(Date.now() / HOUR_MS));
     const navigate = useNavigate();
     const { location } = useOutletContext();
     const { tasks } = useHouseholdTasks();
     const { items } = useInventoryItems();
     const { members } = useFamilyHealth();
     const { orderedRecipes } = useRecipeOrders();
-    const date = getVietnameseDate();
+    const date = getVietnameseDate(hourIndex);
+    const familyImage = FAMILY_IMAGES[hourIndex % FAMILY_IMAGES.length];
     const pendingTasks = tasks.filter((task) => !task.done);
     const lowItems = items.filter((item) => item.stock_percent <= 20);
+
+    useEffect(() => {
+        let hourlyTimer;
+        const updateHour = () => setHourIndex(Math.floor(Date.now() / HOUR_MS));
+        const timeUntilNextHour = HOUR_MS - (Date.now() % HOUR_MS);
+        const firstTimer = window.setTimeout(() => {
+            updateHour();
+            hourlyTimer = window.setInterval(updateHour, HOUR_MS);
+        }, timeUntilNextHour);
+
+        document.addEventListener("visibilitychange", updateHour);
+        return () => {
+            window.clearTimeout(firstTimer);
+            window.clearInterval(hourlyTimer);
+            document.removeEventListener("visibilitychange", updateHour);
+        };
+    }, []);
 
     const features = [
         {
@@ -181,67 +213,114 @@ export default function HomePage() {
                     />
                     <Box
                         sx={{
-                            //
                             position: "relative",
                             display: "flex",
-                            pl: 2,
                             alignItems: "center",
-                            gap: 2,
+                            justifyContent: "space-between",
                         }}
                     >
-                        <Typography
-                            sx={{
-                                fontFamily: fonts.playful,
-                                fontSize: "clamp(38px, 7vh, 60px)",
-                                lineHeight: 1,
-                                color: colors.primary,
-                            }}
-                        >
-                            {date.day}
-                        </Typography>
                         <Box>
-                            <Typography
+                            <Box
                                 sx={{
+                                    position: "relative",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 1.25,
+                                    pl: { xs: 0.5, sm: 2 },
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: { xs: 1.1, sm: 2 },
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    <Typography
+                                        sx={{
+                                            fontFamily: fonts.playful,
+                                            fontSize: "clamp(38px, 7vh, 60px)",
+                                            lineHeight: 1,
+                                            color: colors.primary,
+                                        }}
+                                    >
+                                        {date.day}
+                                    </Typography>
+                                    <Box>
+                                        <Typography
+                                            sx={{
+                                                fontFamily: fonts.display,
+                                                fontSize: 12,
+                                                fontWeight: 800,
+                                                letterSpacing: ".12em",
+                                                color: colors.text,
+                                            }}
+                                        >
+                                            {date.month}
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                mt: 0.35,
+                                                fontFamily: fonts.body,
+                                                fontSize: 15,
+                                                textTransform: "capitalize",
+                                                color: colors.textMuted,
+                                            }}
+                                        >
+                                            {date.weekday}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </Box>
+                            <Typography
+                                key={date.quote}
+                                sx={{
+                                    position: "relative",
+                                    mt: 2,
+                                    maxWidth: 520,
+                                    display: "-webkit-box",
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
                                     fontFamily: fonts.display,
-                                    fontSize: 12,
-                                    fontWeight: 800,
-                                    letterSpacing: ".12em",
+                                    fontSize: { xs: 13, sm: 15 },
+                                    lineHeight: 1.45,
                                     color: colors.text,
+                                    animation: "quoteFade 500ms ease both",
+                                    "@keyframes quoteFade": {
+                                        from: { opacity: 0, transform: "translateY(5px)" },
+                                        to: { opacity: 1, transform: "translateY(0)" },
+                                    },
+                                    "@media (max-height: 650px)": { display: "none" },
                                 }}
                             >
-                                {date.month}
-                            </Typography>
-                            <Typography
-                                sx={{
-                                    mt: 0.35,
-                                    fontFamily: fonts.body,
-                                    fontSize: 15,
-                                    textTransform: "capitalize",
-                                    color: colors.textMuted,
-                                }}
-                            >
-                                {date.weekday}
+                                “{date.quote}”
                             </Typography>
                         </Box>
+                        {familyImage && (
+                            <Box
+                                key={familyImage}
+                                component="img"
+                                src={familyImage}
+                                alt="Gia đình BuBu's and DuDu's"
+                                sx={{
+                                    width: "clamp(150px, 30vw, 185px)",
+                                    height: "clamp(120px, 17vh, 145px)",
+                                    flexShrink: 1,
+                                    objectFit: "contain",
+                                    objectPosition: "center",
+                                    filter: `drop-shadow(0 7px 10px ${colors.avatarShadow})`,
+                                    animation: "familyImageFade 650ms ease both",
+                                    "@keyframes familyImageFade": {
+                                        from: { opacity: 0, transform: "translateX(10px) scale(0.94)" },
+                                        to: { opacity: 1, transform: "translateX(0) scale(1)" },
+                                    },
+                                    "@media (max-height: 650px)": { width: 130, height: 100 },
+                                }}
+                            />
+                        )}
                     </Box>
-                    <Typography
-                        sx={{
-                            position: "relative",
-                            mt: 2,
-                            maxWidth: 520,
-                            display: "-webkit-box",
-                            WebkitBoxOrient: "vertical",
-                            WebkitLineClamp: 2,
-                            overflow: "hidden",
-                            fontFamily: fonts.display,
-                            fontSize: { xs: 13, sm: 15 },
-                            lineHeight: 1.45,
-                            color: colors.text,
-                            "@media (max-height: 650px)": { display: "none" },
-                        }}
-                    >
-                        “{date.quote}”
-                    </Typography>
                 </Paper>
 
                 <ButtonBase
@@ -303,7 +382,21 @@ export default function HomePage() {
                     </Paper>
                 </ButtonBase>
 
-                <Box sx={{ minHeight: 0 }}>
+                <Box sx={{ minHeight: 0, position: "relative" }}>
+                    <Box
+                        className="cook-decoration"
+                        sx={{
+                            position: "absolute",
+                            zIndex: 0,
+                            width: 250,
+                            height: 250,
+                            left: "30%",
+                            top: "30%",
+                            borderRadius: "50%",
+                            bgcolor: `${colors.primaryLight}1c`,
+                            pointerEvents: "none",
+                        }}
+                    />
                     <Box
                         sx={{
                             display: "grid",
@@ -420,6 +513,7 @@ export default function HomePage() {
                 <Paper
                     elevation={0}
                     sx={{
+                        position: "relative",
                         p: 1.1,
                         display: "flex",
                         alignItems: "center",

@@ -8,7 +8,6 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Fab,
     IconButton,
     MenuItem,
     Paper,
@@ -20,12 +19,15 @@ import {
 import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
-import HomeRepairServiceRoundedIcon from "@mui/icons-material/HomeRepairServiceRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import { useHouseholdTasks } from "../hooks/useHouseholdTasks";
 import { colors, fonts } from "../theme";
+import allTasksImage from "../assets/viec_nha_all.png";
+import houseTasksImage from "../assets/viec_nha.png";
+import repairTasksImage from "../assets/dudu_sua_chua.png";
+import planTasksImage from "../assets/ke_hoach.png";
 
 const GROUPS = [
     { id: "all", label: "Tất cả" },
@@ -33,6 +35,12 @@ const GROUPS = [
     { id: "repair", label: "Sửa chữa" },
     { id: "plan", label: "Kế hoạch" },
 ];
+const GROUP_IMAGES = {
+    all: allTasksImage,
+    house: houseTasksImage,
+    repair: repairTasksImage,
+    plan: planTasksImage,
+};
 const GROUP_ICONS = {
     house: <AssignmentTurnedInRoundedIcon />,
     repair: <BuildRoundedIcon />,
@@ -125,97 +133,137 @@ export default function RepairPage() {
         >
             <Box
                 sx={{
+                    position: "relative",
+                    overflow: "hidden",
+                    display: "flex",
+                    gap: 2,
+                    alignItems: "center",
                     flexShrink: 0,
                     p: 1.5,
                     color: colors.white,
                     background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
                 }}
             >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box sx={{ flex: 1, minWidth: 0, pr: 1 }}>
-                        <Box
-                            sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 0.55,
-                                px: 0.85,
-                                py: 0.35,
-                                mb: 1.25,
-                                borderRadius: 99,
-                                bgcolor: colors.headerOverlay,
-                                border: `1px solid ${colors.headerBorder}`,
-                            }}
-                        >
-                            <AssignmentTurnedInRoundedIcon sx={{ fontSize: 14, color: colors.accent }} />
-                            <Typography
+                <Box
+                    sx={{
+                        position: "absolute",
+                        width: 150,
+                        height: 150,
+                        right: -45,
+                        top: -65,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}3c`,
+                    }}
+                />
+                <Box
+                    sx={{
+                        position: "absolute",
+                        width: 130,
+                        height: 130,
+                        left: -45,
+                        bottom: -65,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}2c`,
+                    }}
+                />
+                <Box sx={{ flex: 2 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <Box sx={{ flex: 1, minWidth: 0, pr: 1 }}>
+                            <Box
                                 sx={{
-                                    fontFamily: fonts.body,
-                                    fontSize: 9.5,
-                                    fontWeight: 700,
-                                    lineHeight: 1,
-                                    letterSpacing: ".12em",
-                                    opacity: 0.9,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.55,
+                                    px: 0.85,
+                                    py: 0.35,
+                                    mb: 1.25,
+                                    borderRadius: 99,
+                                    bgcolor: colors.headerOverlay,
+                                    border: `1px solid ${colors.headerBorder}`,
                                 }}
                             >
-                                NHẬT TRÌNH GIA ĐÌNH
+                                <AssignmentTurnedInRoundedIcon sx={{ fontSize: 14, color: colors.accent }} />
+                                <Typography
+                                    sx={{
+                                        fontFamily: fonts.body,
+                                        fontSize: 9.5,
+                                        fontWeight: 700,
+                                        lineHeight: 1,
+                                        letterSpacing: ".12em",
+                                        opacity: 0.9,
+                                    }}
+                                >
+                                    NHẬT TRÌNH GIA ĐÌNH
+                                </Typography>
+                            </Box>
+                            <Typography
+                                sx={{
+                                    fontFamily: fonts.display,
+                                    fontSize: { xs: 21, sm: 23 },
+                                    fontWeight: 800,
+                                    lineHeight: 1.15,
+                                    textShadow: `0 3px 12px ${colors.markerShadow}`,
+                                }}
+                            >
+                                Sổ tay việc nhà
                             </Typography>
                         </Box>
-                        <Typography
-                            sx={{
-                                fontFamily: fonts.display,
-                                fontSize: { xs: 21, sm: 23 },
-                                fontWeight: 800,
-                                lineHeight: 1.15,
-                                textShadow: `0 3px 12px ${colors.markerShadow}`,
-                            }}
-                        >
-                            Sổ tay việc nhà
-                        </Typography>
-                        {/* <Typography
-                            sx={{
-                                mt: 0.45,
-                                fontFamily: fonts.body,
-                                fontSize: 11.5,
-                                lineHeight: 1.35,
-                                opacity: 0.76,
-                            }}
-                        >
-                            {tasks.length - completed > 0
-                                ? `${tasks.length - completed} việc đang chờ Đại nhân xử lý`
-                                : "Mọi việc hôm nay đã được thu xếp gọn gàng"}
-                        </Typography> */}
                     </Box>
-                    <Box
-                        sx={{
-                            width: 52,
-                            height: 52,
-                            display: "grid",
-                            placeItems: "center",
-                            borderRadius: "50%",
-                            bgcolor: colors.headerOverlay,
-                            border: `1px solid ${colors.headerBorder}`,
-                        }}
-                    >
-                        <HomeRepairServiceRoundedIcon />
-                    </Box>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5 }}>
-                    <Box
-                        sx={{ flex: 1, height: 7, overflow: "hidden", borderRadius: 99, bgcolor: colors.headerOverlay }}
-                    >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5 }}>
                         <Box
                             sx={{
-                                width: `${progress}%`,
-                                height: "100%",
+                                flex: 1,
+                                height: 7,
+                                overflow: "hidden",
                                 borderRadius: 99,
-                                bgcolor: colors.accent,
-                                transition: "width 250ms ease",
+                                bgcolor: colors.headerOverlay,
                             }}
-                        />
+                        >
+                            <Box
+                                sx={{
+                                    width: `${progress}%`,
+                                    height: "100%",
+                                    borderRadius: 99,
+                                    bgcolor: colors.accent,
+                                    transition: "width 250ms ease",
+                                }}
+                            />
+                        </Box>
+                        <Typography sx={{ fontFamily: fonts.display, fontSize: 12 }}>
+                            {completed}/{tasks.length} xong
+                        </Typography>
                     </Box>
-                    <Typography sx={{ fontFamily: fonts.display, fontSize: 12 }}>
-                        {completed}/{tasks.length} xong
-                    </Typography>
+                </Box>
+                <Box
+                    sx={{
+                        flex: 1,
+                        width: 60,
+                        height: 60,
+                        placeItems: "center",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        borderRadius: 3,
+                    }}
+                >
+                    <Box
+                        key={group}
+                        component="img"
+                        src={GROUP_IMAGES[group]}
+                        alt={`Minh họa ${GROUPS.find((item) => item.id === group)?.label || "việc nhà"}`}
+                        sx={{
+                            width: 120,
+                            height: 120,
+                            objectFit: "contain",
+                            filter: `drop-shadow(0 3px 5px ${colors.avatarShadow})`,
+                            animation: "taskImageChange 420ms ease both",
+                            "@keyframes taskImageChange": {
+                                from: { opacity: 0, transform: "translateY(8px) scale(0.92)" },
+                                to: { opacity: 1, transform: "translateY(0) scale(1)" },
+                            },
+                        }}
+                    />
                 </Box>
             </Box>
 
@@ -249,6 +297,7 @@ export default function RepairPage() {
 
             <Box
                 sx={{
+                    position: "relative",
                     flex: 1,
                     minHeight: 0,
                     overflowY: "auto",
@@ -261,6 +310,34 @@ export default function RepairPage() {
                     gap: 1.25,
                 }}
             >
+                <Box
+                    className="cook-decoration"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 400,
+                        height: 400,
+                        left: "-40%",
+                        top: "-40%",
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}2c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    className="cook-decoration"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        left: "40%",
+                        top: "40%",
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
                 {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải công việc...</Typography>}
                 {error && <Typography sx={{ color: colors.colorError }}>Không thể tải công việc: {error}</Typography>}
                 {!loading && !error && !visibleTasks.length && (

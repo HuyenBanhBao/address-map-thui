@@ -36,6 +36,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { TEAM_MEMBERS } from "../../hooks/useSharedLocations";
 import { useRecipeOrders } from "../../hooks/useRecipeOrders";
 import { colors, gradients, fonts } from "../../theme";
+import familyHeaderImage from "../../assets/gia_dinh_10.png";
+import familyHeaderImage_1 from "../../assets/gia_dinh_1.png";
 
 const STYLE_BTN = {
     minHeight: 46,
@@ -135,23 +137,46 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                         top: -70,
                         right: -35,
                         borderRadius: "50%",
-                        bgcolor: colors.headerOverlay,
+                        bgcolor: `${colors.primaryLight}3c`,
+                    }}
+                />
+                <Box
+                    sx={{
+                        position: "absolute",
+                        width: 120,
+                        height: 120,
+                        bottom: -60,
+                        left: -50,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}2c`,
                     }}
                 />
                 <Box sx={{ position: "relative", display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                         sx={{
-                            width: 42,
-                            height: 42,
-                            display: "grid",
+                            width: 76,
+                            height: 76,
                             placeItems: "center",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             flexShrink: 0,
                             borderRadius: 3,
                             bgcolor: colors.headerOverlay,
                             border: `1px solid ${colors.headerBorder}`,
                         }}
                     >
-                        <HomeRoundedIcon />
+                        <Box
+                            component="img"
+                            src={familyHeaderImage}
+                            alt="Gia đình BuBu's and DuDu's"
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                objectFit: "contain",
+                                filter: `drop-shadow(0 3px 5px ${colors.avatarShadow})`,
+                            }}
+                        />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography
@@ -166,7 +191,7 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                             BẢNG ĐIỀU KHIỂN
                         </Typography>
                         <Typography noWrap sx={{ mt: 0.2, fontFamily: fonts.display, fontSize: 17, fontWeight: 800 }}>
-                            Nhà mình hôm nay
+                            Home Bubu's
                         </Typography>
                     </Box>
                     <IconButton
@@ -203,6 +228,7 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
 
             <Box
                 sx={{
+                    position: "relative",
                     flex: 1,
                     minHeight: 0,
                     overflowY: "auto",
@@ -214,6 +240,47 @@ export default function TeamSidebar({ name, onNameChange, people, sharing, onSha
                     "&::-webkit-scrollbar-thumb": { borderRadius: 99, bgcolor: colors.border },
                 }}
             >
+                <Box
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        top: -80,
+                        left: -50,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}4c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 250,
+                        height: 250,
+                        bottom: -100,
+                        right: -80,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}2c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    component="img"
+                    src={familyHeaderImage_1}
+                    alt="Gia đình BuBu's and DuDu's"
+                    sx={{
+                        position: "absolute",
+                        width: 300,
+                        height: 300,
+                        opacity: 0.15,
+                        top: 80,
+                        left: 20,
+                        objectFit: "contain",
+                        filter: `drop-shadow(0 3px 5px ${colors.avatarShadow})`,
+                    }}
+                />
                 <Typography
                     sx={{
                         px: 0.65,
