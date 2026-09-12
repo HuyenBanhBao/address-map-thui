@@ -54,16 +54,21 @@ export function useRecipeOrders() {
     }, [refreshOrder]);
 
     const createOrder = async (recipeIds) => {
-        if (!recipeIds.length) return;
+        const uniqueRecipeIds = [...new Set(recipeIds)].filter(Boolean);
         setSavingOrder(true);
         setOrderError("");
         try {
             const user = await ensureUser();
             const { error: clearError } = await supabase.from("recipe_orders").delete().neq("id", "00000000-0000-0000-0000-000000000000");
             if (clearError) throw clearError;
+            if (uniqueRecipeIds.length === 0) {
+                setOrderedRecipes([]);
+                window.dispatchEvent(new CustomEvent("recipe-order-changed"));
+                return null;
+            }
             const { data: order, error: orderError } = await supabase.from("recipe_orders").insert({ created_by: user.id }).select().single();
             if (orderError) throw orderError;
-            const { error: itemsError } = await supabase.from("recipe_order_items").insert(recipeIds.map((recipeId) => ({ order_id: order.id, recipe_id: recipeId })));
+            const { error: itemsError } = await supabase.from("recipe_order_items").insert(uniqueRecipeIds.map((recipeId) => ({ order_id: order.id, recipe_id: recipeId })));
             if (itemsError) throw itemsError;
             await refreshOrder();
             window.dispatchEvent(new CustomEvent("recipe-order-changed"));

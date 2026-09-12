@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Drawer } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import AppHeader from "./AppHeader";
@@ -12,7 +12,26 @@ export default function AppShell() {
     const [myLocation, setMyLocation] = useState(initialLocation);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [mapFocus, setMapFocus] = useState(null);
+    const [pendingMapFocus, setPendingMapFocus] = useState(null);
     const location = useSharedLocations(setMyLocation);
+
+    useEffect(() => {
+        if (!mapFocus || !pendingMapFocus) return undefined;
+
+        const frame = window.requestAnimationFrame(() => {
+            mapFocus(pendingMapFocus);
+            setPendingMapFocus(null);
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [mapFocus, pendingMapFocus]);
+
+    const focusPersonOnMap = (person) => {
+        if (mapFocus) {
+            mapFocus(person);
+            return;
+        }
+        setPendingMapFocus(person);
+    };
 
     const sidebar = (
         <TeamSidebar
@@ -22,7 +41,7 @@ export default function AppShell() {
             sharing={location.sharing}
             onShare={location.startSharing}
             onStop={location.stopSharing}
-            onFocus={(person) => mapFocus?.(person)}
+            onFocus={focusPersonOnMap}
             onClose={() => setDrawerOpen(false)}
         />
     );

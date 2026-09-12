@@ -2,13 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
     Box,
     Button,
-    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Fab,
-    FormControlLabel,
     IconButton,
     MenuItem,
     Paper,
@@ -22,6 +19,8 @@ import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { useNavigate } from "react-router-dom";
@@ -37,8 +36,13 @@ const CATEGORIES = [
     { id: "snack", label: "Ăn vặt" },
 ];
 
+const ORDER_CATEGORIES = ["main", "side", "soup", "snack"].map((categoryId) =>
+    CATEGORIES.find((category) => category.id === categoryId),
+);
+
 export default function CookPage() {
     const inputRef = useRef(null);
+    const orderSelectionTouchedRef = useRef(false);
     const navigate = useNavigate();
     const { recipes, loading, error, addRecipe } = useRecipes();
     const [selectedCategory, setSelectedCategory] = useState("all");
@@ -50,7 +54,14 @@ export default function CookPage() {
     const { orderedRecipes, createOrder, savingOrder, orderError } = useRecipeOrders();
 
     useEffect(() => {
-        if (orderDialogOpen) setSelectedOrderIds(orderedRecipes.map((recipe) => recipe.id));
+        if (!orderDialogOpen) {
+            orderSelectionTouchedRef.current = false;
+            return;
+        }
+
+        if (!orderSelectionTouchedRef.current) {
+            setSelectedOrderIds(orderedRecipes.map((recipe) => recipe.id));
+        }
     }, [orderDialogOpen, orderedRecipes]);
 
     const setImageFromFile = (file) => {
@@ -94,6 +105,7 @@ export default function CookPage() {
     };
 
     const toggleOrderRecipe = (recipeId) => {
+        orderSelectionTouchedRef.current = true;
         setSelectedOrderIds((current) =>
             current.includes(recipeId) ? current.filter((id) => id !== recipeId) : [...current, recipeId],
         );
@@ -172,6 +184,7 @@ export default function CookPage() {
                         sx={{
                             width: 60,
                             height: 60,
+                            flex: 1,
                             placeItems: "center",
                             display: "flex",
                             alignItems: "center",
@@ -228,17 +241,8 @@ export default function CookPage() {
                         position: "relative",
                         flex: 1,
                         minHeight: 0,
-                        overflowY: "auto",
-                        overflowX: "hidden",
-                        p: 1.25,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1.25,
+                        overflow: "hidden",
                         isolation: "isolate",
-                        "& > :not(.cook-decoration)": {
-                            position: "relative",
-                            zIndex: 1,
-                        },
                     }}
                 >
                     <Box
@@ -271,170 +275,357 @@ export default function CookPage() {
                         }}
                     />
 
-                    {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải món ăn...</Typography>}
-                    {error && <Typography sx={{ color: "error.main" }}>Không thể tải/lưu món: {error}</Typography>}
-                    {!loading && !error && recipes.length === 0 && (
-                        <Typography sx={{ color: colors.textMuted }}>
-                            Chưa có món nào. Hãy thêm món đầu tiên nhé.
-                        </Typography>
-                    )}
-                    {CATEGORIES.filter(
-                        (category) => selectedCategory === "all" || category.id === selectedCategory,
-                    ).map((category) => {
-                        const items = recipes.filter((recipe) => recipe.category === category.id);
-                        if (items.length === 0 && selectedCategory === "all") return null;
-                        return (
-                            <Box
-                                key={category.id}
-                                sx={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 1.25 }}
-                            >
-                                <Typography
+                    <Box
+                        sx={{
+                            position: "relative",
+                            zIndex: 1,
+                            height: "100%",
+                            boxSizing: "border-box",
+                            overflowY: "auto",
+                            overflowX: "hidden",
+                            p: 1.25,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1.25,
+                        }}
+                    >
+                        {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải món ăn...</Typography>}
+                        {error && <Typography sx={{ color: "error.main" }}>Không thể tải/lưu món: {error}</Typography>}
+                        {!loading && !error && recipes.length === 0 && (
+                            <Typography sx={{ color: colors.textMuted }}>
+                                Chưa có món nào. Hãy thêm món đầu tiên nhé.
+                            </Typography>
+                        )}
+                        {CATEGORIES.filter(
+                            (category) => selectedCategory === "all" || category.id === selectedCategory,
+                        ).map((category) => {
+                            const items = recipes.filter((recipe) => recipe.category === category.id);
+                            if (items.length === 0 && selectedCategory === "all") return null;
+                            return (
+                                <Box
+                                    key={category.id}
                                     sx={{
-                                        gridColumn: "1 / -1",
-                                        mt: 1,
-                                        color: colors.primary,
-                                        fontFamily: fonts.display,
-                                        fontSize: 17,
-                                        fontWeight: 800,
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                                        gap: 1.25,
                                     }}
                                 >
-                                    {category.label}
-                                </Typography>
-                                {items.map((recipe) => (
-                                    <Paper
-                                        key={recipe.id}
-                                        elevation={0}
-                                        onClick={() => navigate(`/cook/${recipe.id}`)}
+                                    <Typography
                                         sx={{
-                                            overflow: "hidden",
-                                            borderRadius: 2,
-                                            bgcolor: colors.white,
-                                            border: `1px solid ${colors.border}`,
-                                            cursor: "pointer",
+                                            gridColumn: "1 / -1",
+                                            mt: 1,
+                                            color: colors.primary,
+                                            fontFamily: fonts.display,
+                                            fontSize: 17,
+                                            fontWeight: 800,
                                         }}
                                     >
-                                        <Box
+                                        {category.label}
+                                    </Typography>
+                                    {items.map((recipe) => (
+                                        <Paper
+                                            key={recipe.id}
+                                            elevation={0}
+                                            onClick={() => navigate(`/cook/${recipe.id}`)}
                                             sx={{
-                                                aspectRatio: "1.2 / 1",
-                                                display: "grid",
-                                                placeItems: "center",
-                                                bgcolor: colors.backgroundSoft,
-                                                background: recipe.image_url
-                                                    ? `center / cover no-repeat url(${recipe.image_url})`
-                                                    : colors.backgroundSoft,
+                                                overflow: "hidden",
+                                                borderRadius: 2,
+                                                bgcolor: colors.white,
+                                                border: `1px solid ${colors.border}`,
+                                                cursor: "pointer",
                                             }}
                                         >
-                                            {!recipe.image_url && (
-                                                <AddPhotoAlternateRoundedIcon
-                                                    sx={{ fontSize: 34, color: colors.primary }}
-                                                />
-                                            )}
-                                        </Box>
-                                        <Box sx={{ p: 1.1 }}>
-                                            <Typography
-                                                sx={{
-                                                    fontFamily: fonts.display,
-                                                    fontWeight: 700,
-                                                    fontSize: 13,
-                                                    color: colors.text,
-                                                    display: "-webkit-box",
-                                                    WebkitBoxOrient: "vertical",
-                                                    WebkitLineClamp: 2,
-                                                    overflow: "hidden",
-                                                    lineHeight: 1.35,
-                                                    minHeight: "2.7em",
-                                                }}
-                                            >
-                                                {recipe.name}
-                                            </Typography>
                                             <Box
                                                 sx={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: 0.75,
-                                                    mt: 0.5,
-                                                    color: colors.textMuted,
+                                                    aspectRatio: "1.2 / 1",
+                                                    display: "grid",
+                                                    placeItems: "center",
+                                                    bgcolor: colors.backgroundSoft,
+                                                    background: recipe.image_url
+                                                        ? `center / cover no-repeat url(${recipe.image_url})`
+                                                        : colors.backgroundSoft,
                                                 }}
                                             >
-                                                <AccessTimeRoundedIcon sx={{ fontSize: 14 }} />
-                                                <Typography sx={{ fontFamily: fonts.body, fontSize: 11 }}>
-                                                    {recipe.prep_minutes} phút
-                                                </Typography>
-                                                <StarRoundedIcon
-                                                    sx={{ ml: "auto", fontSize: 14, color: colors.accent }}
-                                                />
-                                                <Typography
-                                                    sx={{ fontFamily: fonts.body, fontSize: 11, color: colors.accent }}
-                                                >
-                                                    {recipe.rating}
-                                                </Typography>
+                                                {!recipe.image_url && (
+                                                    <AddPhotoAlternateRoundedIcon
+                                                        sx={{ fontSize: 34, color: colors.primary }}
+                                                    />
+                                                )}
                                             </Box>
-                                        </Box>
-                                    </Paper>
-                                ))}
-                            </Box>
-                        );
-                    })}
+                                            <Box sx={{ p: 1.1 }}>
+                                                <Typography
+                                                    sx={{
+                                                        fontFamily: fonts.display,
+                                                        fontWeight: 700,
+                                                        fontSize: 13,
+                                                        color: colors.text,
+                                                        display: "-webkit-box",
+                                                        WebkitBoxOrient: "vertical",
+                                                        WebkitLineClamp: 2,
+                                                        overflow: "hidden",
+                                                        lineHeight: 1.35,
+                                                        minHeight: "2.7em",
+                                                    }}
+                                                >
+                                                    {recipe.name}
+                                                </Typography>
+                                                <Box
+                                                    sx={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 0.75,
+                                                        mt: 0.5,
+                                                        color: colors.textMuted,
+                                                    }}
+                                                >
+                                                    <AccessTimeRoundedIcon sx={{ fontSize: 14 }} />
+                                                    <Typography sx={{ fontFamily: fonts.body, fontSize: 11 }}>
+                                                        {recipe.prep_minutes} phút
+                                                    </Typography>
+                                                    <StarRoundedIcon
+                                                        sx={{ ml: "auto", fontSize: 14, color: colors.accent }}
+                                                    />
+                                                    <Typography
+                                                        sx={{
+                                                            fontFamily: fonts.body,
+                                                            fontSize: 11,
+                                                            color: colors.accent,
+                                                        }}
+                                                    >
+                                                        {recipe.rating}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        </Paper>
+                                    ))}
+                                </Box>
+                            );
+                        })}
+                    </Box>
                 </Box>
             </Box>
             <Box
                 onClick={() => setOrderDialogOpen(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") setOrderDialogOpen(true);
+                }}
                 sx={{
                     position: "absolute",
                     left: 16,
                     bottom: 16,
-                    bgcolor: colors.primary,
+                    minHeight: 48,
+                    background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
                     color: colors.white,
-                    fontFamily: fonts.display,
-                    fontWeight: 500,
-                    fontSize: 14,
                     display: "flex",
                     alignItems: "center",
-                    px: 1.5,
-                    py: 0.75,
-                    borderRadius: 2.5,
-                    border: `1px solid ${colors.border}`,
-                    boxShadow: `0 5px 14px ${colors.avatarShadow}`,
+                    gap: 1,
+                    px: 1.1,
+                    py: 0.65,
+                    borderRadius: 3,
+                    border: `1px solid ${colors.headerBorder}`,
+                    boxShadow: `0 8px 22px ${colors.markerShadow}`,
                     cursor: "pointer",
+                    transition: "transform 180ms ease, box-shadow 180ms ease",
+                    "&:active": { transform: "scale(0.97)" },
                 }}
             >
-                <ShoppingCartOutlinedIcon sx={{ mr: 0.75, fontSize: 16 }} />
-                <Typography variant="span">Tiểu nhị, gọi món</Typography>
+                <Box
+                    sx={{
+                        position: "relative",
+                        width: 34,
+                        height: 34,
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                        borderRadius: 2.25,
+                        bgcolor: colors.headerOverlay,
+                        border: `1px solid ${colors.headerBorder}`,
+                    }}
+                >
+                    <ShoppingCartOutlinedIcon sx={{ fontSize: 19 }} />
+                    {orderedRecipes.length > 0 && (
+                        <Box
+                            component="span"
+                            sx={{
+                                position: "absolute",
+                                top: -7,
+                                right: -7,
+                                minWidth: 19,
+                                height: 19,
+                                px: 0.4,
+                                display: "grid",
+                                placeItems: "center",
+                                borderRadius: 10,
+                                bgcolor: colors.accent,
+                                color: colors.primary,
+                                border: `2px solid ${colors.primary}`,
+                                fontFamily: fonts.body,
+                                fontSize: 10,
+                                fontWeight: 800,
+                            }}
+                        >
+                            {orderedRecipes.length}
+                        </Box>
+                    )}
+                </Box>
+                <Box>
+                    <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>
+                        Tiểu nhị, gọi món
+                    </Typography>
+                </Box>
             </Box>
             <Box
                 onClick={() => setDialogOpen(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") setDialogOpen(true);
+                }}
                 sx={{
                     position: "absolute",
                     right: 16,
                     bottom: 16,
+                    minHeight: 48,
                     bgcolor: colors.accent,
                     color: colors.primary,
-                    fontFamily: fonts.display,
-                    fontWeight: 600,
-                    fontSize: 14,
                     display: "flex",
                     alignItems: "center",
-                    px: 1.5,
-                    py: 0.75,
-                    borderRadius: 2.5,
+                    gap: 1,
+                    px: 1.1,
+                    py: 0.65,
+                    borderRadius: 3,
+                    border: `1px solid ${colors.headerBorder}`,
+                    boxShadow: `0 8px 22px ${colors.avatarShadow}`,
                     cursor: "pointer",
+                    transition: "transform 180ms ease, box-shadow 180ms ease",
+                    "&:active": { transform: "scale(0.97)" },
                     "&:hover": { bgcolor: colors.accent },
                 }}
             >
-                <AddRoundedIcon sx={{ mr: 0.75, fontSize: 18 }} />
-                <Typography variant="span">Thêm bí kíp</Typography>
+                <Box
+                    sx={{
+                        width: 34,
+                        height: 34,
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                        borderRadius: 2.25,
+                        bgcolor: `${colors.white}7a`,
+                        border: `1px solid ${colors.white}a8`,
+                    }}
+                >
+                    <AddRoundedIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>
+                    Thêm bí kíp
+                </Typography>
             </Box>
             <Dialog
                 open={dialogOpen}
                 onClose={() => !saving && setDialogOpen(false)}
                 fullWidth
                 maxWidth="xs"
-                PaperProps={{ sx: { borderRadius: 3, bgcolor: colors.background } }}
+                PaperProps={{
+                    sx: {
+                        width: { xs: "calc(100% - 24px)", sm: "100%" },
+                        maxHeight: "calc(100dvh - 32px)",
+                        m: 1.5,
+                        position: "relative",
+                        overflow: "hidden",
+                        isolation: "isolate",
+                        borderRadius: 4,
+                        bgcolor: colors.background,
+                        border: `1px solid ${colors.border}`,
+                        boxShadow: `0 22px 60px ${colors.markerShadow}`,
+                    },
+                }}
             >
-                <DialogTitle sx={{ fontFamily: fonts.display, fontWeight: 800, color: colors.primary }}>
-                    Chuẩn tấu
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        right: -65,
+                        top: 35,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}1c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 300,
+                        height: 300,
+                        left: -100,
+                        bottom: 0,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <DialogTitle
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.25,
+                        p: 2,
+                        color: colors.primary,
+                        bgcolor: `${colors.backgroundWarm}e8`,
+                        borderBottom: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 42,
+                            height: 42,
+                            display: "grid",
+                            placeItems: "center",
+                            flexShrink: 0,
+                            borderRadius: 2.5,
+                            bgcolor: colors.primary,
+                            color: colors.white,
+                            boxShadow: `0 6px 16px ${colors.avatarShadow}`,
+                        }}
+                    >
+                        <AddPhotoAlternateRoundedIcon />
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 19 }}>
+                            Thêm bí kíp mới
+                        </Typography>
+                        <Typography sx={{ mt: 0.2, fontFamily: fonts.body, fontSize: 11, color: colors.textMuted }}>
+                            Ghi lại một món ngon cho thực đơn
+                        </Typography>
+                    </Box>
+                    <IconButton
+                        aria-label="Đóng phần thêm bí kíp"
+                        onClick={() => setDialogOpen(false)}
+                        disabled={saving}
+                        sx={{ color: colors.textMuted }}
+                    >
+                        <CloseRoundedIcon />
+                    </IconButton>
                 </DialogTitle>
-                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: "12px !important" }}>
+                <DialogContent
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1.5,
+                        p: "16px !important",
+                        bgcolor: "transparent",
+                    }}
+                >
                     <input
                         ref={inputRef}
                         hidden
@@ -444,23 +635,78 @@ export default function CookPage() {
                     />
                     <Box
                         onClick={chooseImage}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") chooseImage();
+                        }}
                         sx={{
+                            position: "relative",
                             aspectRatio: "1.6 / 1",
                             display: "grid",
                             placeItems: "center",
+                            overflow: "hidden",
                             cursor: "pointer",
-                            borderRadius: 2.5,
+                            borderRadius: 3,
                             bgcolor: colors.backgroundSoft,
-                            border: `1px dashed ${colors.primary}`,
+                            border: `2px dashed ${draft.image ? colors.accent : colors.primary}`,
                             background: draft.image
                                 ? `center / cover no-repeat url(${draft.image})`
                                 : colors.backgroundSoft,
+                            boxShadow: `0 8px 20px ${colors.avatarShadow}`,
+                            transition: "transform 180ms ease, border-color 180ms ease",
+                            "&:active": { transform: "scale(0.99)" },
                         }}
                     >
-                        {!draft.image && (
-                            <IconButton>
-                                <AddPhotoAlternateRoundedIcon sx={{ fontSize: 38, color: colors.primary }} />
-                            </IconButton>
+                        {draft.image ? (
+                            <Box
+                                sx={{
+                                    position: "absolute",
+                                    right: 10,
+                                    bottom: 10,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.6,
+                                    px: 1.1,
+                                    py: 0.65,
+                                    borderRadius: 2,
+                                    bgcolor: `${colors.white}e8`,
+                                    color: colors.primary,
+                                    boxShadow: `0 4px 12px ${colors.avatarShadow}`,
+                                }}
+                            >
+                                <AddPhotoAlternateRoundedIcon sx={{ fontSize: 17 }} />
+                                <Typography sx={{ fontFamily: fonts.body, fontSize: 11, fontWeight: 800 }}>
+                                    Đổi ảnh
+                                </Typography>
+                            </Box>
+                        ) : (
+                            <Box sx={{ textAlign: "center" }}>
+                                <IconButton
+                                    tabIndex={-1}
+                                    sx={{
+                                        width: 52,
+                                        height: 52,
+                                        bgcolor: colors.white,
+                                        color: colors.primary,
+                                        boxShadow: `0 6px 18px ${colors.avatarShadow}`,
+                                        "&:hover": { bgcolor: colors.white },
+                                    }}
+                                >
+                                    <AddPhotoAlternateRoundedIcon />
+                                </IconButton>
+                                <Typography
+                                    sx={{
+                                        mt: 1,
+                                        fontFamily: fonts.display,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        color: colors.primary,
+                                    }}
+                                >
+                                    Chọn ảnh món ăn
+                                </Typography>
+                            </Box>
                         )}
                     </Box>
                     <TextField
@@ -468,12 +714,22 @@ export default function CookPage() {
                         label="Tên món ăn"
                         value={draft.name}
                         onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+                        sx={{
+                            bgcolor: `${colors.white}dc`,
+                            borderRadius: 2.5,
+                            "& .MuiOutlinedInput-root": { borderRadius: 2.5 },
+                        }}
                     />
                     <TextField
                         select
                         label="Nhóm món"
                         value={draft.category}
                         onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
+                        sx={{
+                            bgcolor: `${colors.white}dc`,
+                            borderRadius: 2.5,
+                            "& .MuiOutlinedInput-root": { borderRadius: 2.5 },
+                        }}
                     >
                         {CATEGORIES.map((category) => (
                             <MenuItem key={category.id} value={category.id}>
@@ -482,17 +738,41 @@ export default function CookPage() {
                         ))}
                     </TextField>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setDialogOpen(false)} disabled={saving}>
+                <DialogActions
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        gap: 1,
+                        px: 2,
+                        py: 1.5,
+                        bgcolor: `${colors.white}e8`,
+                        borderTop: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Button
+                        onClick={() => setDialogOpen(false)}
+                        disabled={saving}
+                        sx={{ color: colors.textMuted, fontWeight: 700 }}
+                    >
                         Hủy
                     </Button>
                     <Button
                         variant="contained"
                         onClick={submit}
                         disabled={saving || !draft.name.trim()}
-                        sx={{ bgcolor: colors.primary }}
+                        startIcon={<AddRoundedIcon />}
+                        sx={{
+                            minHeight: 42,
+                            flex: 1,
+                            borderRadius: 2.5,
+                            bgcolor: colors.primary,
+                            fontFamily: fonts.display,
+                            fontSize: 12,
+                            boxShadow: "none",
+                            "&:hover": { bgcolor: colors.primaryDark, boxShadow: "none" },
+                        }}
                     >
-                        {saving ? "Đang lưu..." : "Lưu món"}
+                        {saving ? "Đang lưu..." : "Lưu bí kíp"}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -501,62 +781,301 @@ export default function CookPage() {
                 onClose={() => !savingOrder && setOrderDialogOpen(false)}
                 fullWidth
                 maxWidth="xs"
-                PaperProps={{ sx: { borderRadius: 3, bgcolor: colors.background } }}
+                PaperProps={{
+                    sx: {
+                        width: { xs: "calc(100% - 24px)", sm: "100%" },
+                        maxHeight: "calc(100dvh - 32px)",
+                        m: 1.5,
+                        position: "relative",
+                        overflow: "hidden",
+                        isolation: "isolate",
+                        borderRadius: 4,
+                        bgcolor: colors.background,
+                        border: `1px solid ${colors.border}`,
+                        boxShadow: `0 22px 60px ${colors.markerShadow}`,
+                    },
+                }}
             >
-                <DialogTitle sx={{ fontFamily: fonts.display, fontWeight: 800, color: colors.primary }}>
-                    Order món ăn
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        right: -65,
+                        top: 35,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}1c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 300,
+                        height: 300,
+                        left: -100,
+                        bottom: 0,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <DialogTitle
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.25,
+                        p: 2,
+                        color: colors.primary,
+                        bgcolor: `${colors.backgroundWarm}e8`,
+                        borderBottom: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 42,
+                            height: 42,
+                            display: "grid",
+                            placeItems: "center",
+                            flexShrink: 0,
+                            borderRadius: 2.5,
+                            bgcolor: colors.primary,
+                            color: colors.white,
+                            boxShadow: `0 6px 16px ${colors.avatarShadow}`,
+                        }}
+                    >
+                        <ShoppingCartOutlinedIcon />
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 19 }}>
+                            Tiểu nhị, gọi món
+                        </Typography>
+                    </Box>
+                    <IconButton
+                        aria-label="Đóng thực đơn"
+                        onClick={() => setOrderDialogOpen(false)}
+                        disabled={savingOrder}
+                        sx={{ color: colors.textMuted }}
+                    >
+                        <CloseRoundedIcon />
+                    </IconButton>
                 </DialogTitle>
-                <DialogContent sx={{ pt: "8px !important" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                        <Typography sx={{ color: colors.textMuted, fontSize: 13 }}>
-                            Chọn những món Đại nhân muốn ăn.
+                <DialogContent sx={{ position: "relative", zIndex: 1, p: "16px !important", bgcolor: "transparent" }}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 1,
+                            mb: 1.5,
+                            px: 0.25,
+                        }}
+                    >
+                        <Typography sx={{ color: colors.textMuted, fontFamily: fonts.body, fontSize: 12 }}>
+                            Đã chọn {selectedOrderIds.length}/{recipes.length} món
                         </Typography>
                         <Button
                             size="small"
-                            onClick={() => setSelectedOrderIds([])}
-                            sx={{ color: colors.primary, flexShrink: 0 }}
+                            onClick={() => {
+                                orderSelectionTouchedRef.current = true;
+                                setSelectedOrderIds([]);
+                            }}
+                            disabled={selectedOrderIds.length === 0}
+                            sx={{
+                                minWidth: 0,
+                                px: 1,
+                                color: colors.colorError,
+                                flexShrink: 0,
+                                fontFamily: fonts.body,
+                                fontSize: 11,
+                                fontWeight: 700,
+                            }}
                         >
                             Bỏ chọn tất cả
                         </Button>
                     </Box>
-                    {recipes.map((recipe) => (
-                        <FormControlLabel
-                            key={recipe.id}
-                            control={
-                                <Checkbox
-                                    checked={selectedOrderIds.includes(recipe.id)}
-                                    onChange={() => toggleOrderRecipe(recipe.id)}
-                                    color="secondary"
-                                />
-                            }
-                            label={recipe.name}
-                            sx={{
-                                display: "flex",
-                                mx: 0,
-                                borderBottom: `1px solid ${colors.subtleBorder}`,
-                                "& .MuiFormControlLabel-label": {
-                                    fontFamily: fonts.display,
-                                    fontSize: 14,
-                                    color: colors.text,
-                                },
-                            }}
-                        />
-                    ))}
+                    {ORDER_CATEGORIES.map((category) => {
+                        const categoryRecipes = recipes.filter((recipe) => recipe.category === category.id);
+                        if (categoryRecipes.length === 0) return null;
+
+                        return (
+                            <Box key={category.id} sx={{ mb: 2 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mb: 1 }}>
+                                    <Typography
+                                        sx={{
+                                            fontFamily: fonts.display,
+                                            fontSize: 15,
+                                            fontWeight: 800,
+                                            color: colors.primary,
+                                        }}
+                                    >
+                                        {category.label}
+                                    </Typography>
+                                    <Box
+                                        component="span"
+                                        sx={{
+                                            minWidth: 22,
+                                            height: 22,
+                                            px: 0.65,
+                                            display: "grid",
+                                            placeItems: "center",
+                                            borderRadius: 10,
+                                            bgcolor: colors.backgroundSoft,
+                                            color: colors.textMuted,
+                                            fontFamily: fonts.body,
+                                            fontSize: 10,
+                                            fontWeight: 800,
+                                        }}
+                                    >
+                                        {categoryRecipes.length}
+                                    </Box>
+                                </Box>
+                                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 1 }}>
+                                    {categoryRecipes.map((recipe) => {
+                                        const selected = selectedOrderIds.includes(recipe.id);
+                                        return (
+                                            <Paper
+                                                key={recipe.id}
+                                                component="button"
+                                                type="button"
+                                                role="checkbox"
+                                                aria-checked={selected}
+                                                onClick={() => toggleOrderRecipe(recipe.id)}
+                                                elevation={0}
+                                                sx={{
+                                                    position: "relative",
+                                                    minWidth: 0,
+                                                    p: 0,
+                                                    overflow: "hidden",
+                                                    textAlign: "left",
+                                                    borderRadius: 2.5,
+                                                    bgcolor: selected ? `${colors.accent}12` : colors.white,
+                                                    border: `2px solid ${selected ? colors.accent : colors.border}`,
+                                                    cursor: "pointer",
+                                                    transition: "transform 160ms ease, border-color 160ms ease",
+                                                    "&:active": { transform: "scale(0.98)" },
+                                                }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        aspectRatio: "1.8 / 1",
+                                                        display: "grid",
+                                                        placeItems: "center",
+                                                        bgcolor: colors.backgroundSoft,
+                                                        background: recipe.image_url
+                                                            ? `center / cover no-repeat url(${recipe.image_url})`
+                                                            : colors.backgroundSoft,
+                                                    }}
+                                                >
+                                                    {!recipe.image_url && (
+                                                        <AddPhotoAlternateRoundedIcon
+                                                            sx={{ fontSize: 29, color: colors.primary }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                                <Box sx={{ p: 1 }}>
+                                                    <Typography
+                                                        sx={{
+                                                            minHeight: "2.6em",
+                                                            display: "-webkit-box",
+                                                            WebkitBoxOrient: "vertical",
+                                                            WebkitLineClamp: 2,
+                                                            overflow: "hidden",
+                                                            fontFamily: fonts.display,
+                                                            fontSize: 12,
+                                                            fontWeight: 700,
+                                                            lineHeight: 1.3,
+                                                            color: colors.text,
+                                                        }}
+                                                    >
+                                                        {recipe.name}
+                                                    </Typography>
+                                                </Box>
+                                                <Box
+                                                    sx={{
+                                                        position: "absolute",
+                                                        top: 7,
+                                                        right: 7,
+                                                        width: 22,
+                                                        height: 22,
+                                                        display: "grid",
+                                                        placeItems: "center",
+                                                        borderRadius: "50%",
+                                                        bgcolor: selected ? colors.white : `${colors.white}d9`,
+                                                        border: `1px solid ${selected ? colors.accent : colors.border}`,
+                                                        color: colors.accent,
+                                                        boxShadow: `0 2px 7px ${colors.avatarShadow}`,
+                                                    }}
+                                                >
+                                                    {selected && <CheckCircleRoundedIcon sx={{ fontSize: 22 }} />}
+                                                </Box>
+                                            </Paper>
+                                        );
+                                    })}
+                                </Box>
+                            </Box>
+                        );
+                    })}
+                    {!loading && recipes.length === 0 && (
+                        <Box sx={{ py: 5, textAlign: "center" }}>
+                            <ShoppingCartOutlinedIcon sx={{ fontSize: 40, color: colors.border }} />
+                            <Typography sx={{ mt: 1, color: colors.textMuted, fontFamily: fonts.body, fontSize: 13 }}>
+                                Chưa có món nào trong thực đơn.
+                            </Typography>
+                        </Box>
+                    )}
                     {orderError && (
                         <Typography sx={{ mt: 1, color: "error.main", fontSize: 13 }}>{orderError}</Typography>
                     )}
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setOrderDialogOpen(false)} disabled={savingOrder}>
+                <DialogActions
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        gap: 1,
+                        px: 2,
+                        py: 1.5,
+                        bgcolor: `${colors.white}e8`,
+                        borderTop: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Button
+                        onClick={() => setOrderDialogOpen(false)}
+                        disabled={savingOrder}
+                        sx={{ color: colors.textMuted, fontWeight: 700 }}
+                    >
                         Hủy
                     </Button>
                     <Button
                         variant="contained"
                         onClick={submitOrder}
-                        disabled={savingOrder || selectedOrderIds.length === 0}
-                        sx={{ bgcolor: colors.primary }}
+                        disabled={savingOrder}
+                        startIcon={selectedOrderIds.length > 0 ? <ShoppingCartOutlinedIcon /> : null}
+                        sx={{
+                            minHeight: 42,
+                            flex: 1,
+                            borderRadius: 2.5,
+                            bgcolor: selectedOrderIds.length > 0 ? colors.primary : colors.colorError,
+                            fontFamily: fonts.display,
+                            fontSize: 12,
+                            boxShadow: "none",
+                            "&:hover": {
+                                bgcolor: selectedOrderIds.length > 0 ? colors.primaryDark : colors.colorError,
+                                boxShadow: "none",
+                            },
+                        }}
                     >
-                        {savingOrder ? "Đang gửi..." : `Đặt ${selectedOrderIds.length} món`}
+                        {savingOrder
+                            ? "Đang lưu..."
+                            : selectedOrderIds.length > 0
+                              ? `Lưu order · ${selectedOrderIds.length} món`
+                              : "Hủy order"}
                     </Button>
                 </DialogActions>
             </Dialog>

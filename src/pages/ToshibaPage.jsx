@@ -7,7 +7,6 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Fab,
     IconButton,
     MenuItem,
     Paper,
@@ -24,10 +23,14 @@ import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import LocalLaundryServiceRoundedIcon from "@mui/icons-material/LocalLaundryServiceRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { keyframes } from "@mui/system";
 import { useInventoryItems } from "../hooks/useInventoryItems";
 import { colors, fonts } from "../theme";
 import quocKhoImage from "../assets/quoc-kho.png";
+import fridgeImage from "../assets/tu_lanh.png";
+import spiceImage from "../assets/gia_vi.png";
+import laundryImage from "../assets/giat_xa.png";
 
 const CATEGORIES = [
     { id: "all", label: "Tất cả" },
@@ -36,6 +39,13 @@ const CATEGORIES = [
     { id: "spice", label: "Gia vị" },
     { id: "laundry", label: "Giặt xả" },
 ];
+const CATEGORY_IMAGES = {
+    all: quocKhoImage,
+    fridge: fridgeImage,
+    dry: quocKhoImage,
+    spice: spiceImage,
+    laundry: laundryImage,
+};
 const CATEGORY_META = {
     fridge: { label: "Tủ lạnh", icon: <AcUnitRoundedIcon />, color: "#4a9ed6" },
     dry: { label: "Đồ khô", icon: <Inventory2RoundedIcon />, color: "#ba8b4c" },
@@ -47,6 +57,11 @@ const STOCK_STATUSES = [
     { id: "medium", label: "Đủ dùng", percent: 50, color: colors.accent },
     { id: "full", label: "Mới nạp đầy", percent: 100, color: colors.primary },
 ];
+const FORM_FIELD_SX = {
+    bgcolor: `${colors.white}dc`,
+    borderRadius: 2.5,
+    "& .MuiOutlinedInput-root": { borderRadius: 2.5 },
+};
 const initialDraft = () => ({ name: "", category: "fridge", amount: "", status: "medium" });
 const alertBellShake = keyframes`
     0%, 100% { transform: rotate(0deg); }
@@ -259,14 +274,20 @@ export default function ToshibaPage() {
                         }}
                     >
                         <Box
+                            key={category}
                             component="img"
-                            src={quocKhoImage}
-                            alt="Quốc khố"
+                            src={CATEGORY_IMAGES[category]}
+                            alt={`Minh họa ${CATEGORIES.find((item) => item.id === category)?.label || "Quốc khố"}`}
                             sx={{
                                 width: 110,
                                 height: 110,
                                 objectFit: "contain",
                                 filter: `drop-shadow(0 3px 5px ${colors.avatarShadow})`,
+                                animation: "inventoryImageChange 420ms ease both",
+                                "@keyframes inventoryImageChange": {
+                                    from: { opacity: 0, transform: "translateY(8px) scale(0.92)" },
+                                    to: { opacity: 1, transform: "translateY(0) scale(1)" },
+                                },
                             }}
                         />
                     </Box>
@@ -304,19 +325,8 @@ export default function ToshibaPage() {
                     position: "relative",
                     flex: 1,
                     minHeight: 0,
-                    overflowY: "auto",
-                    p: 1.25,
-                    pb: 10,
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
-                    gridAutoRows: "max-content",
-                    alignContent: "start",
-                    gap: 1.25,
+                    overflow: "hidden",
                     isolation: "isolate",
-                    "& > :not(.toshiba-decoration)": {
-                        position: "relative",
-                        zIndex: 1,
-                    },
                 }}
             >
                 <Box
@@ -347,81 +357,100 @@ export default function ToshibaPage() {
                         pointerEvents: "none",
                     }}
                 />
-                {loading && <Typography sx={{ color: colors.textMuted }}>Đang kiểm kê Quốc khố...</Typography>}
-                {error && <Typography sx={{ color: colors.colorError }}>Không thể tải Quốc khố: {error}</Typography>}
-                {!loading && !error && !visibleItems.length && (
-                    <Typography sx={{ color: colors.textMuted }}>
-                        Chưa có món đồ nào. Hãy nhập món đầu tiên nhé.
-                    </Typography>
-                )}
-                {visibleItems.map((item) => {
-                    const meta = CATEGORY_META[item.category];
-                    const status = getStatus(item.stock_percent);
-                    return (
-                        <Paper
-                            key={item.id}
-                            elevation={0}
-                            sx={{
-                                p: 1.25,
-                                borderRadius: 2,
-                                bgcolor: colors.white,
-                                border: `1px solid ${colors.border}`,
-                            }}
-                        >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.1 }}>
-                                <Box
-                                    sx={{
-                                        width: 42,
-                                        height: 42,
-                                        display: "grid",
-                                        placeItems: "center",
-                                        borderRadius: 2.5,
-                                        color: meta.color,
-                                        bgcolor: `${meta.color}1f`,
-                                    }}
-                                >
-                                    {meta.icon}
-                                </Box>
-                                <Box sx={{ minWidth: 0, flex: 1 }}>
-                                    <Typography
-                                        noWrap
+                <Box
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        height: "100%",
+                        boxSizing: "border-box",
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        p: 1.25,
+                        pb: 10,
+                        display: "grid",
+                        gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                        gridAutoRows: "max-content",
+                        alignContent: "start",
+                        gap: 1.25,
+                    }}
+                >
+                    {loading && <Typography sx={{ color: colors.textMuted }}>Đang kiểm kê Quốc khố...</Typography>}
+                    {error && (
+                        <Typography sx={{ color: colors.colorError }}>Không thể tải Quốc khố: {error}</Typography>
+                    )}
+                    {!loading && !error && !visibleItems.length && (
+                        <Typography sx={{ color: colors.textMuted }}>
+                            Chưa có món đồ nào. Hãy nhập món đầu tiên nhé.
+                        </Typography>
+                    )}
+                    {visibleItems.map((item) => {
+                        const meta = CATEGORY_META[item.category];
+                        const status = getStatus(item.stock_percent);
+                        return (
+                            <Paper
+                                key={item.id}
+                                elevation={0}
+                                sx={{
+                                    p: 1.25,
+                                    borderRadius: 2,
+                                    bgcolor: colors.white,
+                                    border: `1px solid ${colors.border}`,
+                                }}
+                            >
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1.1 }}>
+                                    <Box
                                         sx={{
-                                            fontFamily: fonts.display,
-                                            fontSize: 15,
-                                            fontWeight: 800,
-                                            color: colors.text,
+                                            width: 42,
+                                            height: 42,
+                                            display: "grid",
+                                            placeItems: "center",
+                                            borderRadius: 2.5,
+                                            color: meta.color,
+                                            bgcolor: `${meta.color}1f`,
                                         }}
                                     >
-                                        {item.name}
-                                    </Typography>
-                                    <Typography sx={{ mt: 0.15, fontSize: 12, color: colors.textMuted }}>
-                                        {item.amount || "Chưa ghi số lượng"}
-                                    </Typography>
+                                        {meta.icon}
+                                    </Box>
+                                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                                        <Typography
+                                            noWrap
+                                            sx={{
+                                                fontFamily: fonts.display,
+                                                fontSize: 15,
+                                                fontWeight: 800,
+                                                color: colors.text,
+                                            }}
+                                        >
+                                            {item.name}
+                                        </Typography>
+                                        <Typography sx={{ mt: 0.15, fontSize: 12, color: colors.textMuted }}>
+                                            {item.amount || "Chưa ghi số lượng"}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: "flex", alignSelf: "flex-start", mt: -0.5, mr: -0.5 }}>
+                                        <IconButton
+                                            size="small"
+                                            aria-label="Sửa món đồ"
+                                            onClick={() => openEditForm(item)}
+                                            sx={{ color: colors.textMuted }}
+                                        >
+                                            <EditRoundedIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                        <IconButton
+                                            size="small"
+                                            aria-label="Xóa món đồ"
+                                            onClick={() => {
+                                                setDeleteError("");
+                                                setDeletingItem(item);
+                                            }}
+                                            sx={{ color: colors.colorError }}
+                                        >
+                                            <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    </Box>
                                 </Box>
-                                <Box sx={{ display: "flex", alignSelf: "flex-start", mt: -0.5, mr: -0.5 }}>
-                                    <IconButton
-                                        size="small"
-                                        aria-label="Sửa món đồ"
-                                        onClick={() => openEditForm(item)}
-                                        sx={{ color: colors.textMuted }}
-                                    >
-                                        <EditRoundedIcon sx={{ fontSize: 18 }} />
-                                    </IconButton>
-                                    <IconButton
-                                        size="small"
-                                        aria-label="Xóa món đồ"
-                                        onClick={() => {
-                                            setDeleteError("");
-                                            setDeletingItem(item);
-                                        }}
-                                        sx={{ color: colors.colorError }}
-                                    >
-                                        <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
-                                    </IconButton>
-                                </Box>
-                            </Box>
-                            <Box sx={{ mt: 1.15, display: "flex", gap: 0.75 }}>
-                                {/* <Chip
+                                <Box sx={{ mt: 1.15, display: "flex", gap: 0.75 }}>
+                                    {/* <Chip
                                     label={meta.label}
                                     size="small"
                                     sx={{
@@ -432,57 +461,168 @@ export default function ToshibaPage() {
                                         fontWeight: 800,
                                     }}
                                 /> */}
-                                <Chip
-                                    label={status.label}
-                                    size="small"
-                                    sx={{
-                                        height: 24,
-                                        bgcolor: `${status.color}1e`,
-                                        color: status.color,
-                                        fontSize: 11,
-                                        fontWeight: 800,
-                                    }}
-                                />
-                            </Box>
-                        </Paper>
-                    );
-                })}
+                                    <Chip
+                                        label={status.label}
+                                        size="small"
+                                        sx={{
+                                            height: 24,
+                                            bgcolor: `${status.color}1e`,
+                                            color: status.color,
+                                            fontSize: 11,
+                                            fontWeight: 800,
+                                        }}
+                                    />
+                                </Box>
+                            </Paper>
+                        );
+                    })}
+                </Box>
             </Box>
 
             <Box
                 onClick={openAddForm}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") openAddForm();
+                }}
                 sx={{
                     position: "absolute",
                     right: 16,
                     bottom: 16,
+                    minHeight: 48,
                     bgcolor: colors.accent,
                     color: colors.primary,
-                    fontFamily: fonts.display,
-                    fontWeight: 600,
-                    fontSize: 14,
                     display: "flex",
                     alignItems: "center",
-                    px: 1.5,
-                    py: 0.75,
-                    borderRadius: 2.5,
+                    gap: 1,
+                    px: 1.1,
+                    py: 0.65,
+                    borderRadius: 3,
+                    border: `1px solid ${colors.headerBorder}`,
+                    boxShadow: `0 8px 22px ${colors.avatarShadow}`,
                     cursor: "pointer",
+                    transition: "transform 180ms ease, box-shadow 180ms ease",
+                    "&:active": { transform: "scale(0.97)" },
                     "&:hover": { bgcolor: colors.accent },
                 }}
             >
-                <AddRoundedIcon sx={{ mr: 0.75, fontSize: 18 }} />
-                <Typography variant="span"> Nhập kho</Typography>
+                <Box
+                    sx={{
+                        width: 34,
+                        height: 34,
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                        borderRadius: 2.25,
+                        bgcolor: `${colors.white}7a`,
+                        border: `1px solid ${colors.white}a8`,
+                    }}
+                >
+                    <AddRoundedIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>
+                    Nhập kho
+                </Typography>
             </Box>
             <Dialog
                 open={formOpen}
                 onClose={closeForm}
                 fullWidth
                 maxWidth="xs"
-                PaperProps={{ sx: { borderRadius: 4 } }}
+                PaperProps={{
+                    sx: {
+                        width: { xs: "calc(100% - 24px)", sm: "100%" },
+                        maxHeight: "calc(100dvh - 32px)",
+                        m: 1.5,
+                        position: "relative",
+                        overflow: "hidden",
+                        isolation: "isolate",
+                        borderRadius: 4,
+                        bgcolor: colors.background,
+                        border: `1px solid ${colors.border}`,
+                        boxShadow: `0 22px 60px ${colors.markerShadow}`,
+                    },
+                }}
             >
-                <DialogTitle sx={{ fontFamily: fonts.display, color: colors.primary, fontWeight: 800 }}>
-                    {editingItem ? "Sửa món trong Quốc khố" : "Nhập món vào Quốc khố"}
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        right: -65,
+                        top: 35,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}1c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 300,
+                        height: 300,
+                        left: -100,
+                        bottom: 0,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <DialogTitle
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.25,
+                        p: 2,
+                        color: colors.primary,
+                        bgcolor: `${colors.backgroundWarm}e8`,
+                        borderBottom: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 42,
+                            height: 42,
+                            display: "grid",
+                            placeItems: "center",
+                            flexShrink: 0,
+                            borderRadius: 2.5,
+                            bgcolor: colors.primary,
+                            color: colors.white,
+                            boxShadow: `0 6px 16px ${colors.avatarShadow}`,
+                        }}
+                    >
+                        {editingItem ? <EditRoundedIcon /> : <Inventory2RoundedIcon />}
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 19 }}>
+                            {editingItem ? "Sửa món trong Quốc khố" : "Nhập món vào Quốc khố"}
+                        </Typography>
+                        <Typography sx={{ mt: 0.2, fontFamily: fonts.body, fontSize: 11, color: colors.textMuted }}>
+                            {editingItem ? "Cập nhật thông tin và tình trạng" : "Ghi thêm vật phẩm cần quản lý"}
+                        </Typography>
+                    </Box>
+                    <IconButton aria-label="Đóng phần nhập kho" onClick={closeForm} sx={{ color: colors.textMuted }}>
+                        <CloseRoundedIcon />
+                    </IconButton>
                 </DialogTitle>
-                <DialogContent sx={{ display: "grid", gap: 1.25, pt: "12px !important" }}>
+                <DialogContent
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "grid",
+                        gap: 1.25,
+                        p: "16px !important",
+                        bgcolor: "transparent",
+                    }}
+                >
                     <TextField
                         autoFocus
                         required
@@ -491,12 +631,14 @@ export default function ToshibaPage() {
                         onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
                         error={Boolean(formError)}
                         helperText={formError}
+                        sx={FORM_FIELD_SX}
                     />
                     <TextField
                         select
                         label="Nhóm"
                         value={draft.category}
                         onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     >
                         {CATEGORIES.filter((item) => item.id !== "all").map((item) => (
                             <MenuItem key={item.id} value={item.id}>
@@ -509,12 +651,14 @@ export default function ToshibaPage() {
                         placeholder="Ví dụ: 2 chai, 500 g"
                         value={draft.amount}
                         onChange={(event) => setDraft((current) => ({ ...current, amount: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     />
                     <TextField
                         select
                         label="Tình trạng"
                         value={draft.status}
                         onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     >
                         {STOCK_STATUSES.map((status) => (
                             <MenuItem key={status.id} value={status.id}>
@@ -523,17 +667,33 @@ export default function ToshibaPage() {
                         ))}
                     </TextField>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={closeForm} sx={{ color: colors.textMuted }}>
+                <DialogActions
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        gap: 1,
+                        px: 2,
+                        py: 1.5,
+                        bgcolor: `${colors.white}e8`,
+                        borderTop: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Button onClick={closeForm} sx={{ color: colors.textMuted, fontWeight: 700 }}>
                         Hủy
                     </Button>
                     <Button
                         variant="contained"
                         onClick={submitItem}
+                        startIcon={editingItem ? <EditRoundedIcon /> : <AddRoundedIcon />}
                         sx={{
+                            minHeight: 42,
+                            flex: 1,
+                            borderRadius: 2.5,
                             bgcolor: colors.primary,
                             fontFamily: fonts.display,
-                            "&:hover": { bgcolor: colors.primaryDark },
+                            fontSize: 12,
+                            boxShadow: "none",
+                            "&:hover": { bgcolor: colors.primaryDark, boxShadow: "none" },
                         }}
                     >
                         {editingItem ? "Lưu thay đổi" : "Nhập kho"}

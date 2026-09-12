@@ -13,7 +13,9 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class LocationSharingPlugin extends Plugin {
     @PluginMethod
     public void start(PluginCall call) {
-        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        boolean hasFineLocation = ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean hasCoarseLocation = ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!hasFineLocation && !hasCoarseLocation) {
             call.reject("LOCATION_PERMISSION_REQUIRED"); return;
         }
         Intent intent = new Intent(getContext(), LocationSharingService.class);

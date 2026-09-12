@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Geolocation } from "@capacitor/geolocation";
-import { registerPlugin } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { supabase } from "../supabase";
 
 export const TEAM_MEMBERS = ["Vợ thúi", "Mập xinh"];
 const UPDATE_INTERVAL = 10 * 1000;
+const PEOPLE_REFRESH_INTERVAL = 10 * 1000;
 const VISIBLE_FOR = 10 * 60 * 1000;
 const LocationSharing = registerPlugin("LocationSharing");
 
@@ -15,6 +16,7 @@ export function useSharedLocations(onMyLocation) {
     const [people, setPeople] = useState([]);
     const [sharing, setSharing] = useState(false);
     const [status, setStatus] = useState("Sẵn sàng chia sẻ vị trí");
+    const locationUpdateInFlight = useRef(false);
 
     const refreshPeople = useCallback(async () => {
         const { data, error } = await supabase.from("shared_locations").select("*");
@@ -25,32 +27,50 @@ export function useSharedLocations(onMyLocation) {
     useEffect(() => {
         if (!supabase) return undefined;
         let channel;
+        let cancelled = false;
         const connect = async () => {
             const {
                 data: { session },
             } = await supabase.auth.getSession();
             if (!session) await supabase.auth.signInAnonymously();
+            if (cancelled) return;
             await refreshPeople();
+            if (cancelled) return;
             channel = supabase
                 .channel("shared-locations")
                 .on("postgres_changes", { event: "*", schema: "public", table: "shared_locations" }, refreshPeople)
                 .subscribe();
         };
+        const refreshWhenActive = () => {
+            if (!document.hidden) refreshPeople();
+        };
+
         connect();
+        const refreshTimer = window.setInterval(refreshWhenActive, PEOPLE_REFRESH_INTERVAL);
+        window.addEventListener("focus", refreshWhenActive);
+        window.addEventListener("pageshow", refreshWhenActive);
+        document.addEventListener("visibilitychange", refreshWhenActive);
         return () => {
+            cancelled = true;
+            window.clearInterval(refreshTimer);
+            window.removeEventListener("focus", refreshWhenActive);
+            window.removeEventListener("pageshow", refreshWhenActive);
+            document.removeEventListener("visibilitychange", refreshWhenActive);
             if (channel) supabase.removeChannel(channel);
         };
     }, [refreshPeople]);
 
     const updateLocation = useCallback(async () => {
+        if (locationUpdateInFlight.current) return true;
+        locationUpdateInFlight.current = true;
         try {
-            const permission = await Geolocation.requestPermissions();
+            const permission = await Geolocation.checkPermissions();
             if (permission.location !== "granted" && permission.coarseLocation !== "granted")
                 throw new Error("Bạn chưa cấp quyền vị trí");
             const position = await Geolocation.getCurrentPosition({
                 enableHighAccuracy: true,
                 timeout: 15000,
-                maximumAge: 60000,
+                maximumAge: 5000,
             });
             const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
             onMyLocation(location);
@@ -70,12 +90,16 @@ export function useSharedLocations(onMyLocation) {
                 updated_at: new Date().toISOString(),
             });
             setStatus(error ? `Không thể cập nhật vị trí: ${error.message}` : "Đang chia sẻ vị trí với nhóm");
+            return !error;
         } catch (error) {
             setStatus(error.message || "Không thể lấy vị trí. Hãy kiểm tra quyền định vị.");
+            return false;
+        } finally {
+            locationUpdateInFlight.current = false;
         }
     }, [name, onMyLocation]);
 
-    const startSharing = () => {
+    const startSharing = async () => {
         if (!supabase) {
             setStatus("Chưa cấu hình Supabase.");
             return;
@@ -85,12 +109,27 @@ export function useSharedLocations(onMyLocation) {
             return;
         }
         localStorage.setItem("map-display-name", name);
-        setSharing(true);
         setStatus("Đang xin quyền và xác định vị trí…");
-        updateLocation();
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            if (!session) return;
-            try {
+
+        try {
+            const permission = await Geolocation.requestPermissions();
+            if (permission.location !== "granted" && permission.coarseLocation !== "granted")
+                throw new Error("Bạn chưa cấp quyền vị trí");
+
+            let {
+                data: { session },
+            } = await supabase.auth.getSession();
+            if (!session) {
+                const { data, error } = await supabase.auth.signInAnonymously();
+                if (error) throw error;
+                session = data.session;
+            }
+            if (!session) throw new Error("Không thể tạo phiên chia sẻ vị trí");
+
+            const firstUpdateSucceeded = await updateLocation();
+            if (!firstUpdateSucceeded) throw new Error("Không thể gửi vị trí đầu tiên");
+
+            if (Capacitor.isNativePlatform()) {
                 await LocationSharing.start({
                     supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
                     supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -99,8 +138,14 @@ export function useSharedLocations(onMyLocation) {
                     userId: session.user.id,
                     displayName: name,
                 });
-            } catch (_) {}
-        });
+            }
+
+            setSharing(true);
+            setStatus("Đang chia sẻ vị trí với nhóm");
+        } catch (error) {
+            setSharing(false);
+            setStatus(error?.message || "Không thể bật chia sẻ vị trí. Hãy kiểm tra quyền định vị.");
+        }
     };
 
     useEffect(() => {

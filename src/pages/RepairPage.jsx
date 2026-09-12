@@ -22,6 +22,7 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useHouseholdTasks } from "../hooks/useHouseholdTasks";
 import { colors, fonts } from "../theme";
 import allTasksImage from "../assets/viec_nha_all.png";
@@ -52,6 +53,11 @@ const PRIORITY_COLORS = {
     "Nhẹ nhàng": "#69b5e6",
     "Cần làm": colors.accent,
     Gấp: colors.colorError,
+};
+const FORM_FIELD_SX = {
+    bgcolor: `${colors.white}dc`,
+    borderRadius: 2.5,
+    "& .MuiOutlinedInput-root": { borderRadius: 2.5 },
 };
 const initialDraft = () => ({
     title: "",
@@ -300,14 +306,8 @@ export default function RepairPage() {
                     position: "relative",
                     flex: 1,
                     minHeight: 0,
-                    overflowY: "auto",
-                    p: 1.25,
-                    pb: 10,
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
-                    gridAutoRows: "max-content",
-                    alignContent: "start",
-                    gap: 1.25,
+                    overflow: "hidden",
+                    isolation: "isolate",
                 }}
             >
                 <Box
@@ -338,152 +338,179 @@ export default function RepairPage() {
                         pointerEvents: "none",
                     }}
                 />
-                {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải công việc...</Typography>}
-                {error && <Typography sx={{ color: colors.colorError }}>Không thể tải công việc: {error}</Typography>}
-                {!loading && !error && !visibleTasks.length && (
-                    <Typography sx={{ color: colors.textMuted }}>
-                        Chưa có công việc nào. Hãy thêm việc đầu tiên nhé.
-                    </Typography>
-                )}
-                {visibleTasks.map((task) => {
-                    const due = dueInfo(task.due, task.done);
-                    const taskColor = PRIORITY_COLORS[task.priority] || colors.primaryLight;
-                    return (
-                        <Paper
-                            key={task.id}
-                            elevation={0}
-                            sx={{
-                                position: "relative",
-                                overflow: "hidden",
-                                border: `1px solid ${due.overdue ? colors.colorError : colors.border}`,
-                                borderRadius: 3,
-                                bgcolor: task.done ? colors.backgroundSoft : colors.white,
-                                opacity: task.done ? 0.72 : 1,
-                            }}
-                        >
-                            <Box
-                                sx={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 6, bgcolor: taskColor }}
-                            />
-                            <Box sx={{ p: 1.25, pl: 2 }}>
-                                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.25 }}>
-                                    <Checkbox
-                                        checked={task.done}
-                                        onChange={() => toggleTask(task).catch(() => {})}
-                                        sx={{
-                                            mt: -0.9,
-                                            ml: -1,
-                                            color: taskColor,
-                                            "&.Mui-checked": { color: colors.primary },
-                                        }}
-                                    />
-                                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                                        <Typography
-                                            sx={{
-                                                fontFamily: fonts.display,
-                                                fontSize: 15,
-                                                fontWeight: 800,
-                                                color: colors.text,
-                                                textDecoration: task.done ? "line-through" : "none",
-                                            }}
-                                        >
-                                            {task.title}
-                                        </Typography>
-                                        {!!task.detail && (
-                                            <Typography
-                                                sx={{
-                                                    mt: 0.4,
-                                                    fontSize: 12,
-                                                    lineHeight: 1.45,
-                                                    color: colors.textMuted,
-                                                }}
-                                            >
-                                                {task.detail}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                    <Box sx={{ display: "flex", mt: -0.75, mr: -0.75 }}>
-                                        <IconButton
-                                            size="small"
-                                            aria-label="Sửa công việc"
-                                            onClick={() => {
-                                                setEditingTask(task);
-                                                setDraft({
-                                                    title: task.title,
-                                                    detail: task.detail || "",
-                                                    task_group: task.group,
-                                                    priority: task.priority,
-                                                    assigned_to: task.owner,
-                                                    due_date: task.due,
-                                                });
-                                                setSubmitError("");
-                                                setAddOpen(true);
-                                            }}
-                                            sx={{ color: colors.textMuted }}
-                                        >
-                                            <EditRoundedIcon sx={{ fontSize: 18 }} />
-                                        </IconButton>
-                                        <IconButton
-                                            size="small"
-                                            aria-label="Xóa công việc"
-                                            onClick={() => {
-                                                setDeleteError("");
-                                                setDeletingTask(task);
-                                            }}
-                                            sx={{ color: colors.colorError }}
-                                        >
-                                            <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
-                                        </IconButton>
-                                    </Box>
-                                </Box>
+                <Box
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        height: "100%",
+                        boxSizing: "border-box",
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        p: 1.25,
+                        pb: 10,
+                        display: "grid",
+                        gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                        gridAutoRows: "max-content",
+                        alignContent: "start",
+                        gap: 1.25,
+                    }}
+                >
+                    {loading && <Typography sx={{ color: colors.textMuted }}>Đang tải công việc...</Typography>}
+                    {error && (
+                        <Typography sx={{ color: colors.colorError }}>Không thể tải công việc: {error}</Typography>
+                    )}
+                    {!loading && !error && !visibleTasks.length && (
+                        <Typography sx={{ color: colors.textMuted }}>
+                            Chưa có công việc nào. Hãy thêm việc đầu tiên nhé.
+                        </Typography>
+                    )}
+                    {visibleTasks.map((task) => {
+                        const due = dueInfo(task.due, task.done);
+                        const taskColor = PRIORITY_COLORS[task.priority] || colors.primaryLight;
+                        return (
+                            <Paper
+                                key={task.id}
+                                elevation={0}
+                                sx={{
+                                    position: "relative",
+                                    overflow: "hidden",
+                                    border: `1px solid ${due.overdue ? colors.colorError : colors.border}`,
+                                    borderRadius: 3,
+                                    bgcolor: task.done ? colors.backgroundSoft : colors.white,
+                                    opacity: task.done ? 0.72 : 1,
+                                }}
+                            >
                                 <Box
                                     sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        gap: 1,
-                                        mt: 1.25,
+                                        position: "absolute",
+                                        top: 0,
+                                        bottom: 0,
+                                        left: 0,
+                                        width: 6,
+                                        bgcolor: taskColor,
                                     }}
-                                >
-                                    <Box>
-                                        <Chip
-                                            icon={GROUP_ICONS[task.group]}
-                                            label={task.priority}
-                                            size="small"
+                                />
+                                <Box sx={{ p: 1.25, pl: 2 }}>
+                                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.25 }}>
+                                        <Checkbox
+                                            checked={task.done}
+                                            onChange={() => toggleTask(task).catch(() => {})}
                                             sx={{
-                                                height: 26,
-                                                bgcolor: due.overdue ? `${colors.colorError}22` : `${taskColor}22`,
-                                                color: due.overdue ? colors.colorError : colors.text,
-                                                "& .MuiChip-icon": {
-                                                    color: due.overdue ? colors.colorError : taskColor,
-                                                    fontSize: 16,
-                                                },
+                                                mt: -0.9,
+                                                ml: -1,
+                                                color: taskColor,
+                                                "&.Mui-checked": { color: colors.primary },
                                             }}
                                         />
-                                        {group === "all" && (
-                                            <Typography sx={{ mt: 0.4, fontSize: 10, color: colors.textMuted }}>
-                                                Nhóm: {GROUPS.find((item) => item.id === task.group)?.label}
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                            <Typography
+                                                sx={{
+                                                    fontFamily: fonts.display,
+                                                    fontSize: 15,
+                                                    fontWeight: 800,
+                                                    color: colors.text,
+                                                    textDecoration: task.done ? "line-through" : "none",
+                                                }}
+                                            >
+                                                {task.title}
                                             </Typography>
-                                        )}
+                                            {!!task.detail && (
+                                                <Typography
+                                                    sx={{
+                                                        mt: 0.4,
+                                                        fontSize: 12,
+                                                        lineHeight: 1.45,
+                                                        color: colors.textMuted,
+                                                    }}
+                                                >
+                                                    {task.detail}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                        <Box sx={{ display: "flex", mt: -0.75, mr: -0.75 }}>
+                                            <IconButton
+                                                size="small"
+                                                aria-label="Sửa công việc"
+                                                onClick={() => {
+                                                    setEditingTask(task);
+                                                    setDraft({
+                                                        title: task.title,
+                                                        detail: task.detail || "",
+                                                        task_group: task.group,
+                                                        priority: task.priority,
+                                                        assigned_to: task.owner,
+                                                        due_date: task.due,
+                                                    });
+                                                    setSubmitError("");
+                                                    setAddOpen(true);
+                                                }}
+                                                sx={{ color: colors.textMuted }}
+                                            >
+                                                <EditRoundedIcon sx={{ fontSize: 18 }} />
+                                            </IconButton>
+                                            <IconButton
+                                                size="small"
+                                                aria-label="Xóa công việc"
+                                                onClick={() => {
+                                                    setDeleteError("");
+                                                    setDeletingTask(task);
+                                                }}
+                                                sx={{ color: colors.colorError }}
+                                            >
+                                                <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
+                                            </IconButton>
+                                        </Box>
                                     </Box>
-                                    <Box sx={{ textAlign: "right" }}>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 11,
-                                                color: due.overdue ? colors.colorError : colors.textMuted,
-                                                fontWeight: due.overdue ? 800 : 400,
-                                            }}
-                                        >
-                                            {due.label}
-                                        </Typography>
-                                        <Typography sx={{ mt: 0.15, fontSize: 11, color: colors.textMuted }}>
-                                            Nô tì: {task.owner}
-                                        </Typography>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            gap: 1,
+                                            mt: 1.25,
+                                        }}
+                                    >
+                                        <Box>
+                                            <Chip
+                                                icon={GROUP_ICONS[task.group]}
+                                                label={task.priority}
+                                                size="small"
+                                                sx={{
+                                                    height: 26,
+                                                    bgcolor: due.overdue ? `${colors.colorError}22` : `${taskColor}22`,
+                                                    color: due.overdue ? colors.colorError : colors.text,
+                                                    "& .MuiChip-icon": {
+                                                        color: due.overdue ? colors.colorError : taskColor,
+                                                        fontSize: 16,
+                                                    },
+                                                }}
+                                            />
+                                            {group === "all" && (
+                                                <Typography sx={{ mt: 0.4, fontSize: 10, color: colors.textMuted }}>
+                                                    Nhóm: {GROUPS.find((item) => item.id === task.group)?.label}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                        <Box sx={{ textAlign: "right" }}>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 11,
+                                                    color: due.overdue ? colors.colorError : colors.textMuted,
+                                                    fontWeight: due.overdue ? 800 : 400,
+                                                }}
+                                            >
+                                                {due.label}
+                                            </Typography>
+                                            <Typography sx={{ mt: 0.15, fontSize: 11, color: colors.textMuted }}>
+                                                Nô tì: {task.owner}
+                                            </Typography>
+                                        </Box>
                                     </Box>
                                 </Box>
-                            </Box>
-                        </Paper>
-                    );
-                })}
+                            </Paper>
+                        );
+                    })}
+                </Box>
             </Box>
 
             <Box
@@ -493,38 +520,156 @@ export default function RepairPage() {
                     setDraft(initialDraft());
                     setAddOpen(true);
                 }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    setSubmitError("");
+                    setEditingTask(null);
+                    setDraft(initialDraft());
+                    setAddOpen(true);
+                }}
                 sx={{
                     position: "absolute",
                     right: 16,
                     bottom: 16,
+                    minHeight: 48,
                     bgcolor: colors.accent,
                     color: colors.primary,
-                    fontFamily: fonts.display,
-                    fontWeight: 600,
-                    fontSize: 14,
                     display: "flex",
                     alignItems: "center",
-                    px: 1.5,
-                    py: 0.75,
-                    borderRadius: 2.5,
+                    gap: 1,
+                    px: 1.1,
+                    py: 0.65,
+                    borderRadius: 3,
+                    border: `1px solid ${colors.headerBorder}`,
+                    boxShadow: `0 8px 22px ${colors.avatarShadow}`,
                     cursor: "pointer",
+                    transition: "transform 180ms ease, box-shadow 180ms ease",
+                    "&:active": { transform: "scale(0.97)" },
                     "&:hover": { bgcolor: colors.accent },
                 }}
             >
-                <AddRoundedIcon sx={{ mr: 0.75, fontSize: 18 }} />
-                <Typography variant="span">Giao nhiệm vụ</Typography>
+                <Box
+                    sx={{
+                        width: 34,
+                        height: 34,
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                        borderRadius: 2.25,
+                        bgcolor: `${colors.white}7a`,
+                        border: `1px solid ${colors.white}a8`,
+                    }}
+                >
+                    <AddRoundedIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Typography sx={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 12, lineHeight: 1.2 }}>
+                    Giao nhiệm vụ
+                </Typography>
             </Box>
             <Dialog
                 open={addOpen}
                 onClose={() => setAddOpen(false)}
                 fullWidth
                 maxWidth="xs"
-                PaperProps={{ sx: { borderRadius: 4 } }}
+                PaperProps={{
+                    sx: {
+                        width: { xs: "calc(100% - 24px)", sm: "100%" },
+                        maxHeight: "calc(100dvh - 32px)",
+                        m: 1.5,
+                        position: "relative",
+                        overflow: "hidden",
+                        isolation: "isolate",
+                        borderRadius: 4,
+                        bgcolor: colors.background,
+                        border: `1px solid ${colors.border}`,
+                        boxShadow: `0 22px 60px ${colors.markerShadow}`,
+                    },
+                }}
             >
-                <DialogTitle sx={{ fontFamily: fonts.display, color: colors.primary, fontWeight: 800 }}>
-                    {editingTask ? "Sửa công việc" : "Thêm công việc mới"}
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 200,
+                        height: 200,
+                        right: -65,
+                        top: 35,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.accent}1c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        position: "absolute",
+                        zIndex: 0,
+                        width: 300,
+                        height: 300,
+                        left: -100,
+                        bottom: 0,
+                        borderRadius: "50%",
+                        bgcolor: `${colors.primaryLight}3c`,
+                        pointerEvents: "none",
+                    }}
+                />
+                <DialogTitle
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.25,
+                        p: 2,
+                        color: colors.primary,
+                        bgcolor: `${colors.backgroundWarm}e8`,
+                        borderBottom: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 42,
+                            height: 42,
+                            display: "grid",
+                            placeItems: "center",
+                            flexShrink: 0,
+                            borderRadius: 2.5,
+                            bgcolor: colors.primary,
+                            color: colors.white,
+                            boxShadow: `0 6px 16px ${colors.avatarShadow}`,
+                        }}
+                    >
+                        {editingTask ? <EditRoundedIcon /> : <AssignmentTurnedInRoundedIcon />}
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 19 }}>
+                            {editingTask ? "Sửa nhiệm vụ" : "Giao nhiệm vụ mới"}
+                        </Typography>
+                        <Typography sx={{ mt: 0.2, fontFamily: fonts.body, fontSize: 11, color: colors.textMuted }}>
+                            {editingTask ? "Cập nhật lại nội dung công việc" : "Phân công rõ việc, đúng người, đúng hạn"}
+                        </Typography>
+                    </Box>
+                    <IconButton
+                        aria-label="Đóng phần giao nhiệm vụ"
+                        onClick={() => setAddOpen(false)}
+                        sx={{ color: colors.textMuted }}
+                    >
+                        <CloseRoundedIcon />
+                    </IconButton>
                 </DialogTitle>
-                <DialogContent sx={{ display: "grid", gap: 1.25, pt: "12px !important" }}>
+                <DialogContent
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "grid",
+                        gap: 1.25,
+                        p: "16px !important",
+                        bgcolor: "transparent",
+                    }}
+                >
                     <TextField
                         autoFocus
                         required
@@ -533,6 +678,7 @@ export default function RepairPage() {
                         onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
                         error={Boolean(submitError)}
                         helperText={submitError}
+                        sx={FORM_FIELD_SX}
                     />
                     <TextField
                         label="Ghi chú"
@@ -540,12 +686,14 @@ export default function RepairPage() {
                         minRows={2}
                         value={draft.detail}
                         onChange={(event) => setDraft((current) => ({ ...current, detail: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     />
                     <TextField
                         select
                         label="Nhóm công việc"
                         value={draft.task_group}
                         onChange={(event) => setDraft((current) => ({ ...current, task_group: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     >
                         {GROUPS.filter((item) => item.id !== "all").map((item) => (
                             <MenuItem key={item.id} value={item.id}>
@@ -558,6 +706,7 @@ export default function RepairPage() {
                         label="Mức độ"
                         value={draft.priority}
                         onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     >
                         {PRIORITIES.map((priority) => (
                             <MenuItem key={priority} value={priority}>
@@ -570,6 +719,7 @@ export default function RepairPage() {
                         label="Nô tì phụ trách"
                         value={draft.assigned_to}
                         onChange={(event) => setDraft((current) => ({ ...current, assigned_to: event.target.value }))}
+                        sx={FORM_FIELD_SX}
                     >
                         {["Mập xinh", "Vợ thúi", "Cả hai"].map((owner) => (
                             <MenuItem key={owner} value={owner}>
@@ -583,19 +733,36 @@ export default function RepairPage() {
                         value={draft.due_date}
                         onChange={(event) => setDraft((current) => ({ ...current, due_date: event.target.value }))}
                         InputLabelProps={{ shrink: true }}
+                        sx={FORM_FIELD_SX}
                     />
                 </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={() => setAddOpen(false)} sx={{ color: colors.textMuted }}>
+                <DialogActions
+                    sx={{
+                        position: "relative",
+                        zIndex: 1,
+                        gap: 1,
+                        px: 2,
+                        py: 1.5,
+                        bgcolor: `${colors.white}e8`,
+                        borderTop: `1px solid ${colors.border}`,
+                    }}
+                >
+                    <Button onClick={() => setAddOpen(false)} sx={{ color: colors.textMuted, fontWeight: 700 }}>
                         Hủy
                     </Button>
                     <Button
                         variant="contained"
                         onClick={submitTask}
+                        startIcon={editingTask ? <EditRoundedIcon /> : <AddRoundedIcon />}
                         sx={{
+                            minHeight: 42,
+                            flex: 1,
+                            borderRadius: 2.5,
                             bgcolor: colors.primary,
                             fontFamily: fonts.display,
-                            "&:hover": { bgcolor: colors.primaryDark },
+                            fontSize: 12,
+                            boxShadow: "none",
+                            "&:hover": { bgcolor: colors.primaryDark, boxShadow: "none" },
                         }}
                     >
                         {editingTask ? "Lưu thay đổi" : "Lưu công việc"}

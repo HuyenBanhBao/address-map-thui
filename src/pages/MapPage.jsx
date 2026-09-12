@@ -14,12 +14,22 @@ const reportBadgePulse = keyframes`
 export default function MapPage() {
     const mapRef = useRef(null);
     const [reportOpen, setReportOpen] = useState(false);
-    const { location, registerMapFocus, setDrawerOpen } = useOutletContext();
+    const { location, registerMapFocus } = useOutletContext();
 
     useEffect(() => {
         registerMapFocus(() => (person) => mapRef.current?.focus(person));
         return () => registerMapFocus(null);
     }, [registerMapFocus]);
+
+    const showReportedPerson = () => {
+        const reportedPerson = location.people.reduce((latest, person) => {
+            if (!latest) return person;
+            return new Date(person.updated_at).getTime() > new Date(latest.updated_at).getTime() ? person : latest;
+        }, null);
+
+        if (reportedPerson) mapRef.current?.focus(reportedPerson);
+        setReportOpen(false);
+    };
 
     return (
         <Paper component="section" square elevation={0} sx={{ position: "relative", overflow: "hidden", minHeight: 0, height: "100%" }}>
@@ -82,10 +92,7 @@ export default function MapPage() {
                 >
                     <Paper
                         elevation={5}
-                        onClick={() => {
-                            setDrawerOpen(true);
-                            setReportOpen(false);
-                        }}
+                        onClick={showReportedPerson}
                         sx={{
                             width: "min(300px, calc(100vw - 106px))",
                             minWidth: 0,
